@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  bink-db:
+    container_name: bink-db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-mydatabase}
+    volumes:
+      - ./.pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

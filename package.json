@@ -1,0 +1,16 @@
+{
+  "name": "lin",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "@tanstack/router-devtools": "^1.44.2",
+    "@tanstack/router-plugin": "^1.44.2",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

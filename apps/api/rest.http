@@ -1,0 +1,23 @@
+POST http://localhost:3000/users/login
+content-type: application/json
+
+{
+    "email": "fraj5@gmail.com",
+    "password": "123123123"
+}
+###
+POST http://localhost:3000/users/register
+content-type: application/json
+
+{
+    "email": "fraj5@gmail.com",
+    "password": "123123123",
+	"firstName": "Firas",
+	"lastName": "Jaber"
+}
+###
+GET http://localhost:3000/users/loggedin
+Authorization: Bearer s3yxd4wqgag3yb7aamjqlvitgzcka2g65qiisbns
+###
+POST http://localhost:3000/users/logout
+Authorization: Bearer 4u77cjn4i75s6kdjynabyypivqyriljh3speruu5
