@@ -17,7 +17,19 @@ content-type: application/json
 }
 ###
 GET http://localhost:3000/users/loggedin
-Authorization: Bearer s3yxd4wqgag3yb7aamjqlvitgzcka2g65qiisbns
+Authorization: Bearer 3vvfajonwhwntteokpjcktnoiu2bwvwx7jar5kzw
 ###
 POST http://localhost:3000/users/logout
 Authorization: Bearer 4u77cjn4i75s6kdjynabyypivqyriljh3speruu5
+###
+GET http://localhost:3000/links/
+Authorization: Bearer 3vvfajonwhwntteokpjcktnoiu2bwvwx7jar5kzw
+###
+POST http://localhost:3000/links/
+Authorization: Bearer 3vvfajonwhwntteokpjcktnoiu2bwvwx7jar5kzw
+Content-Type: application/json
+
+{
+    "url": "https://www.google"
+}
+###
