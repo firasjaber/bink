@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, serial, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
 
 export const userTable = pgTable('user', {
   id: uuid('id')
@@ -27,3 +37,62 @@ export const sessionTable = pgTable('session', {
     mode: 'date',
   }).notNull(),
 });
+
+export const linkTagTable = pgTable('link_tag', {
+  id: uuid('id')
+    .default(sql`gen_random_uuid()`)
+    .primaryKey(),
+  name: text('name').notNull(),
+  color: text('color').notNull(),
+  // some tags are created by the user, some are created by the system
+  isSystem: boolean('is_system').notNull(),
+  // user id should be nullable if the tag is system
+  userId: uuid('user_id').references(() => userTable.id, { onDelete: 'cascade' }),
+});
+
+// link state enum
+export const linkStateEnum = pgEnum('link_state', ['processing', 'processed', 'failed']);
+
+export const LinkStateEnum = {
+  PROCESSING: 'processing',
+  PROCESSED: 'processed',
+  FAILED: 'failed',
+} as const;
+
+export const linkTable = pgTable('link', {
+  id: uuid('id')
+    .default(sql`gen_random_uuid()`)
+    .primaryKey(),
+  url: text('url').notNull(),
+  title: text('title'),
+  description: text('description'),
+  image: text('image'),
+  state: linkStateEnum('state').notNull(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => userTable.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+    mode: 'date',
+  })
+    .defaultNow()
+    .notNull(),
+});
+
+// link table zod input type
+export const insertLinkSchema = createInsertSchema(linkTable);
+
+export const linkTagsToLinks = pgTable(
+  'link_tags_to_links',
+  {
+    linkId: uuid('link_id')
+      .notNull()
+      .references(() => linkTable.id),
+    tagId: uuid('tag_id')
+      .notNull()
+      .references(() => linkTagTable.id),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.linkId, t.tagId] }),
+  }),
+);
