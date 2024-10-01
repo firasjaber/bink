@@ -28,10 +28,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   ...initialState,
   setUser: async (sessionId: string) => {
     try {
-      const user = await getLoggedInUser(sessionId);
+      const user = await getLoggedInUser();
       localStorage.setItem('sessionId', sessionId);
       set({ user, sessionId, isAuth: true, isLoading: false });
-    } catch (error) {
+    } catch (_) {
       set(initialState);
     }
   },
@@ -39,9 +39,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     const sessionId = localStorage.getItem('sessionId');
     if (sessionId) {
       try {
-        const user = await getLoggedInUser(sessionId);
+        const user = await getLoggedInUser();
         set({ user, sessionId, isAuth: true, isLoading: false });
-      } catch (error) {
+      } catch (_error) {
         localStorage.removeItem('sessionId');
         set({ ...initialState, isLoading: false });
       }
@@ -52,7 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     const sessionId = localStorage.getItem('sessionId');
     if (sessionId) {
-      logout(sessionId);
+      logout();
       localStorage.removeItem('sessionId');
     }
     set({ ...initialState, isLoading: false });

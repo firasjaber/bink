@@ -12,9 +12,7 @@ import {
 import { createInsertSchema } from 'drizzle-zod';
 
 export const userTable = pgTable('user', {
-  id: uuid('id')
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   firstName: varchar('first_name').notNull(),
   lastName: varchar('last_name').notNull(),
   email: varchar('email').notNull(),
@@ -39,9 +37,7 @@ export const sessionTable = pgTable('session', {
 });
 
 export const linkTagTable = pgTable('link_tag', {
-  id: uuid('id')
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   name: text('name').notNull(),
   color: text('color').notNull(),
   // some tags are created by the user, some are created by the system
@@ -60,9 +56,7 @@ export const LinkStateEnum = {
 } as const;
 
 export const linkTable = pgTable('link', {
-  id: uuid('id')
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   url: text('url').notNull(),
   title: text('title'),
   description: text('description'),

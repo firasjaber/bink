@@ -247,7 +247,7 @@ function SignUpTab() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="!mt-6 w-full">
+          <Button type="submit" className="!mt-6 w-full" disabled={isPending}>
             Sign up
           </Button>
         </form>

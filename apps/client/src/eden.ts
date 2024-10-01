@@ -1,7 +1,17 @@
 import { treaty } from '@elysiajs/eden';
 import type { App } from '../../api/src';
 
-const client = treaty<App>('localhost:3000');
+const client = treaty<App>('localhost:3000', {
+  onRequest: () => {
+    const sessionId = localStorage.getItem('sessionId');
+    if (sessionId) {
+      return {
+        headers: { authorization: `Bearer ${sessionId}` },
+      };
+    }
+    return {};
+  },
+});
 
 export const helloWorld = async () => {
   const response = await client.index.get();
@@ -29,13 +39,27 @@ export const signUp = async (data: {
   return response.data.data;
 };
 
-export const getLoggedInUser = async (sessionId: string) => {
-  const res = await client.users.loggedin.get({
-    headers: { authorization: `Bearer ${sessionId}` },
-  });
+export const getLoggedInUser = async () => {
+  const res = await client.users.loggedin.get();
   return res.data?.data;
 };
 
-export const logout = async (sessionId: string) => {
-  return await client.users.logout.post({}, { headers: { authorization: `Bearer ${sessionId}` } });
+export const logout = async () => {
+  return await client.users.logout.post();
+};
+
+export const createLink = async (data: { url: string }) => {
+  const res = await client.links.post(data);
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+};
+
+export const getLinks = async () => {
+  const res = await client.links.get();
+
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+  return res.data?.data;
 };

@@ -19,7 +19,7 @@ export const Route = createFileRoute('/profile/$id')({
 
 function Profile() {
   const id = Route.useParams().id;
-  const { user, isAuth, logout } = useAuthStore((state) => state);
+  const { user, logout } = useAuthStore((state) => state);
   const navigate = Route.useNavigate();
   const { mutate } = useMutation({
     // @ts-ignore

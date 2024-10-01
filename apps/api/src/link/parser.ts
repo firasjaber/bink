@@ -28,7 +28,7 @@ export async function parseLinkData(url: string): Promise<LinkData> {
     });
 
     return parsedData;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Failed to parse link data');
   }
 }
@@ -42,7 +42,7 @@ export async function isURLReachable(urlString: string): Promise<boolean> {
     });
 
     return response.ok;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
