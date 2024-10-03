@@ -124,6 +124,9 @@ export const scrapingJobs = pgTable("scraping_jobs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   lockedAt: timestamp("locked_at"),
+  linkId: uuid("link_id")
+    .references(() => linkTable.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 // Create Zod schemas for insert and select
