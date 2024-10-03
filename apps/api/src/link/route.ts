@@ -2,7 +2,13 @@ import Elysia, { t } from "elysia";
 import { drizzle } from "..";
 import { sql } from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
-import { insertLinkSchema, LinkStateEnum, linkTable } from "db/src/schema";
+import {
+  insertLinkSchema,
+  insertScrapingJobSchema,
+  LinkStateEnum,
+  linkTable,
+  scrapingJobs,
+} from "db/src/schema";
 import { isURLReachable } from "./helper";
 
 export const links = new Elysia({ prefix: "/links" }).guard(
@@ -50,7 +56,20 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             userId,
           });
 
-          await drizzle.insert(linkTable).values(link);
+          const dbLink = await drizzle
+            .insert(linkTable)
+            .values(link)
+            .returning();
+
+          const job = insertScrapingJobSchema.parse({
+            event: "scrape_og",
+            url: link.url,
+            linkId: dbLink[0].id,
+            priority: 1,
+          });
+
+          // add the srapeOg job to the queue
+          await drizzle.insert(scrapingJobs).values(job);
 
           return { status: "success", message: "Link created" };
         },
