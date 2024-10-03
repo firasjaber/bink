@@ -1,13 +1,25 @@
 import type { JobHandler, JobResult, LinkData } from "../types";
-import type { ScrapingJob } from "db/src/schema";
+import { linkTable, type ScrapingJob } from "db/src/schema";
 import ogs from "open-graph-scraper";
 import { LinkDataSchema } from "../types";
+import { db } from "..";
+import { eq } from "drizzle-orm";
 
 export const scrapeOgHandler: JobHandler<LinkData> = {
   async execute(job: ScrapingJob): Promise<JobResult<LinkData>> {
     console.log(`Scraping OG data for URL: ${job.url}`);
 
     const data = await parseLinkData(job.url);
+
+    // update the link with the data
+    await db
+      .update(linkTable)
+      .set({
+        title: data.title,
+        description: data.description,
+        image: data.image,
+      })
+      .where(eq(linkTable.id, job.linkId));
 
     return {
       success: true,
