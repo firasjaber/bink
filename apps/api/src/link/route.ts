@@ -1,16 +1,16 @@
-import Elysia, { t } from 'elysia';
-import { drizzle } from '..';
-import { sql } from 'drizzle-orm';
-import { getUserIdFromSession, validateSession } from '../auth';
-import { insertLinkSchema, LinkStateEnum, linkTable } from 'db/src/schema';
-import { isURLReachable } from './parser';
+import Elysia, { t } from "elysia";
+import { drizzle } from "..";
+import { sql } from "drizzle-orm";
+import { getUserIdFromSession, validateSession } from "../auth";
+import { insertLinkSchema, LinkStateEnum, linkTable } from "db/src/schema";
+import { isURLReachable } from "./helper";
 
-export const links = new Elysia({ prefix: '/links' }).guard(
+export const links = new Elysia({ prefix: "/links" }).guard(
   {
     async beforeHandle({ headers: { authorization }, error }) {
-      const isValidSession = await validateSession(authorization ?? '');
+      const isValidSession = await validateSession(authorization ?? "");
       if (!authorization || !isValidSession) {
-        throw error('Unauthorized', 'Invalid session');
+        throw error("Unauthorized", "Invalid session");
       }
     },
   },
@@ -18,10 +18,10 @@ export const links = new Elysia({ prefix: '/links' }).guard(
     app
       .resolve(async ({ headers: { authorization } }) => {
         return {
-          userId: await getUserIdFromSession(authorization ?? ''),
+          userId: await getUserIdFromSession(authorization ?? ""),
         };
       })
-      .get('/', async ({ userId }) => {
+      .get("/", async ({ userId }) => {
         const links = await drizzle
           .select({
             id: linkTable.id,
@@ -37,11 +37,11 @@ export const links = new Elysia({ prefix: '/links' }).guard(
         return { data: links };
       })
       .post(
-        '/',
+        "/",
         async ({ userId, body, error }) => {
           // validate the url
           if (!(await isURLReachable(body.url))) {
-            throw error('Bad Request', 'Invalid URL');
+            throw error("Bad Request", "Invalid URL");
           }
 
           const link = insertLinkSchema.parse({
@@ -52,12 +52,12 @@ export const links = new Elysia({ prefix: '/links' }).guard(
 
           await drizzle.insert(linkTable).values(link);
 
-          return { status: 'success', message: 'Link created' };
+          return { status: "success", message: "Link created" };
         },
         {
           body: t.Object({
             url: t.String(),
           }),
-        },
-      ),
+        }
+      )
 );
