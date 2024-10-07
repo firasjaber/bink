@@ -1,5 +1,5 @@
 import type { JobHandler, JobResult, LinkData } from "../types";
-import { linkTable, type ScrapingJob } from "db/src/schema";
+import { LinkStateEnum, linkTable, type ScrapingJob } from "db/src/schema";
 import ogs from "open-graph-scraper";
 import { LinkDataSchema } from "../types";
 import { db } from "..";
@@ -18,6 +18,7 @@ export const scrapeOgHandler: JobHandler<LinkData> = {
         title: data.title,
         description: data.description,
         image: data.image,
+        state: LinkStateEnum.PROCESSED,
       })
       .where(eq(linkTable.id, job.linkId));
 
