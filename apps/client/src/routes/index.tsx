@@ -1,20 +1,21 @@
-import { useAuthStore } from '@/stores/auth';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useState } from 'react';
-import { Link as LinkIcon, Search } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { AddLink } from '@/components/addLink';
-import { linksQueryOptions } from '@/queries/linksQueryOptions';
-import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from "@/stores/auth";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Link as LinkIcon, Search, ExternalLink, Edit } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { AddLink } from "@/components/addLink";
+import { linksQueryOptions } from "@/queries/linksQueryOptions";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const linksQuery = useQuery(linksQueryOptions);
   const links = linksQuery.data;
@@ -24,31 +25,22 @@ function Index() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen container mx-auto">
-      <header className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center space-x-2">
-          <LinkIcon className="h-6 w-6" />
-          <span className="text-xl font-bold">Bink</span>
-        </div>
-        <UserAvatar />
-      </header>
-      <main className="flex-1 p-4">
-        <div className="flex space-x-2 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+    <div className='flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)]'>
+      <main className='flex-1 p-4'>
+        <div className='flex space-x-2 mb-6'>
+          <div className='relative flex-1'>
+            <Search className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <Input
-              className="pl-10"
-              placeholder="Search bookmarks..."
+              className='pl-10'
+              placeholder='Search bookmarks...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <AddLink />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto">
-          {links?.map((link) => (
-            <BookmarkCard key={link.id} bookmark={link} />
-          ))}
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto'>
+          {links?.map((link) => <BookmarkCard key={link.id} bookmark={link} />)}
         </div>
       </main>
     </div>
@@ -56,49 +48,67 @@ function Index() {
 }
 
 function BookmarkCard({ bookmark }) {
+  const isProcessing = !bookmark.title;
+
   return (
     <div
-      className={`border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${bookmark.image ? 'flex flex-col' : ''}`}
+      className={`relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
+        isProcessing ? "opacity-50 cursor-not-allowed" : ""
+      } ${bookmark.image ? "flex flex-col" : ""}`}
     >
-      {bookmark.image ? (
-        <img src={bookmark.image} alt={bookmark.title} className="w-full h-40 object-cover" />
-      ) : (
-        <div className="w-full h-40 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
-          <span className="text-white text-xl font-bold">
-            {bookmark.title ? bookmark.title.charAt(0) : 'Processing...'}
-          </span>
-        </div>
-      )}
-      <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-semibold text-lg mb-2">
-          {bookmark.title ? bookmark.title : 'Processing...'}
+      <div className='relative'>
+        {bookmark.image ? (
+          <img
+            src={bookmark.image}
+            alt={bookmark.title}
+            className={`w-full h-40 object-cover ${
+              !isProcessing
+                ? "transition-all duration-300 group-hover:blur-sm group-hover:brightness-80 group-hover:scale-105"
+                : ""
+            }`}
+          />
+        ) : (
+          <div
+            className={`w-full h-40 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center ${
+              !isProcessing
+                ? "transition-all duration-300 group-hover:blur-sm group-hover:brightness-80 group-hover:scale-105"
+                : ""
+            }`}
+          >
+            <span className='text-white text-xl font-bold'>
+              {bookmark.title ? bookmark.title.charAt(0) : "Processing..."}
+            </span>
+          </div>
+        )}
+        {!isProcessing && (
+          <div className='absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+            <Link to={bookmark.url} target='_blank'>
+              <Button variant='secondary' className='mr-2' size='sm'>
+                <ExternalLink className='w-4 h-4 mr-2' />
+                Visit
+              </Button>
+            </Link>
+            <Link to={`/link/${bookmark.id}`}>
+              <Button variant='secondary' size='sm'>
+                <Edit className='w-4 h-4 mr-2' />
+                Edit
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+      <div className='p-4 flex-1 flex flex-col'>
+        <h3 className='font-semibold text-lg mb-2'>
+          {bookmark.title || "Processing..."}
         </h3>
-        <p className="text-sm text-gray-600 mb-4 flex-1">{bookmark.description}</p>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">tech</Badge>
-          <Badge variant="secondary">meme</Badge>
+        <p className='text-sm text-gray-600 mb-4 flex-1'>
+          {bookmark.description}
+        </p>
+        <div className='flex flex-wrap gap-2'>
+          <Badge variant='secondary'>tech</Badge>
+          <Badge variant='secondary'>meme</Badge>
         </div>
       </div>
     </div>
   );
-}
-
-function UserAvatar() {
-  const { user } = useAuthStore((state) => state);
-  if (user) {
-    return (
-      <Link to="/profile/$id" params={{ id: user.id }}>
-        <Avatar>
-          <AvatarImage
-            src="https://i.pinimg.com/736x/9d/4a/49/9d4a49b2b2b9392d3f844c4dbcff52d6.jpg"
-            alt="@shadcn"
-          />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-      </Link>
-    );
-  }
-  <Link className="underline" to="/auth">
-    Sign in
-  </Link>;
 }

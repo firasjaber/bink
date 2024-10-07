@@ -1,9 +1,9 @@
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
-import '../App.css';
-import { type AuthState, useAuthStore } from '@/stores/auth';
-
-import { useEffect } from 'react';
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import "../App.css";
+import { type AuthState, useAuthStore } from "@/stores/auth";
+import { Navbar } from "@/components/Navbar";
+import { useEffect } from "react";
 
 interface RouterContext {
   auth: AuthState;
@@ -23,6 +23,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
     return (
       <>
+        <Navbar />
         <Outlet />
         <TanStackRouterDevtools />
       </>
