@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
 import {
   insertLinkSchema,
@@ -42,6 +42,27 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           .where(sql`user_id = ${userId}`);
         return { data: links };
       })
+      .get(
+        "/:id",
+        async ({ userId, params: { id }, error }) => {
+          const link = await drizzle
+            .select()
+            .from(linkTable)
+            .where(and(eq(linkTable.id, id), eq(linkTable.userId, userId)))
+            .limit(1);
+
+          if (link.length === 0) {
+            throw error("Not Found", "Link not found");
+          }
+
+          return { data: link[0] };
+        },
+        {
+          params: t.Object({
+            id: t.String(),
+          }),
+        }
+      )
       .post(
         "/",
         async ({ userId, body, error }) => {

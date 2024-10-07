@@ -1,9 +1,9 @@
-import { treaty } from '@elysiajs/eden';
-import type { App } from '../../api/src';
+import { treaty } from "@elysiajs/eden";
+import type { App } from "../../api/src";
 
-const client = treaty<App>('localhost:3000', {
+const client = treaty<App>("localhost:3000", {
   onRequest: () => {
-    const sessionId = localStorage.getItem('sessionId');
+    const sessionId = localStorage.getItem("sessionId");
     if (sessionId) {
       return {
         headers: { authorization: `Bearer ${sessionId}` },
@@ -58,6 +58,15 @@ export const createLink = async (data: { url: string }) => {
 export const getLinks = async () => {
   const res = await client.links.get();
 
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+  return res.data?.data;
+};
+
+export const getLink = async (id: string) => {
+  console.log("getlink : ", id);
+  const res = await client.links({ id }).get();
   if (res.error) {
     throw new Error(res.error.value as string);
   }
