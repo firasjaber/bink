@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import { sql, eq, and } from "drizzle-orm";
+import { sql, eq, and, desc } from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
 import {
   insertLinkSchema,
@@ -39,7 +39,8 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             createdAt: linkTable.createdAt,
           })
           .from(linkTable)
-          .where(sql`user_id = ${userId}`);
+          .where(sql`user_id = ${userId}`)
+          .orderBy(desc(linkTable.createdAt));
         return { data: links };
       })
       .get(
@@ -48,7 +49,9 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           const link = await drizzle
             .select()
             .from(linkTable)
-            .where(and(eq(linkTable.id, id), eq(linkTable.userId, userId)))
+            .where(
+              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
+            )
             .limit(1);
 
           if (link.length === 0) {
