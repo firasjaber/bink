@@ -13,11 +13,6 @@ const client = treaty<App>("localhost:3000", {
   },
 });
 
-export const helloWorld = async () => {
-  const response = await client.index.get();
-  return response.data;
-};
-
 export const signIn = async (data: { email: string; password: string }) => {
   const res = await client.users.login.post(data);
   if (res.error) {
@@ -65,7 +60,6 @@ export const getLinks = async () => {
 };
 
 export const getLink = async (id: string) => {
-  console.log("getlink : ", id);
   const res = await client.links({ id }).get();
   if (res.error) {
     throw new Error(res.error.value as string);

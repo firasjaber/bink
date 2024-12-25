@@ -1,8 +1,6 @@
-import { useAuthStore } from "@/stores/auth";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { Link as LinkIcon, Search, ExternalLink, Edit } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, ExternalLink, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AddLink } from "@/components/addLink";
@@ -12,6 +10,16 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  beforeLoad: ({ context }) => {
+    if (context.auth.isLoading) {
+      return <div>Loading...</div>;
+    }
+    if (!context.auth.isLoading && !context.auth.isAuth) {
+      throw redirect({
+        to: "/auth",
+      });
+    }
+  },
 });
 
 function Index() {
@@ -47,7 +55,17 @@ function Index() {
   );
 }
 
-function BookmarkCard({ bookmark }) {
+function BookmarkCard({
+  bookmark,
+}: {
+  bookmark: {
+    title: string | null;
+    image: string | null;
+    url: string;
+    id: string;
+    description: string | null;
+  };
+}) {
   const isProcessing = !bookmark.title;
 
   return (
@@ -60,7 +78,7 @@ function BookmarkCard({ bookmark }) {
         {bookmark.image ? (
           <img
             src={bookmark.image}
-            alt={bookmark.title}
+            alt={bookmark.title || ""}
             className={`w-full h-40 object-cover ${
               !isProcessing
                 ? "transition-all duration-300 group-hover:blur-sm group-hover:brightness-80 group-hover:scale-105"

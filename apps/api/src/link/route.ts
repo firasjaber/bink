@@ -27,7 +27,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           userId: await getUserIdFromSession(authorization ?? ""),
         };
       })
-      .get("/", async ({ userId }) => {
+      .get("", async ({ userId }) => {
         const links = await drizzle
           .select({
             id: linkTable.id,
@@ -67,7 +67,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
         }
       )
       .post(
-        "/",
+        "",
         async ({ userId, body, error }) => {
           // validate the url
           if (!(await isURLReachable(body.url))) {

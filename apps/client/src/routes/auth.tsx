@@ -1,18 +1,13 @@
-import {
-  createLazyFileRoute,
-  useNavigate,
-  redirect,
-  createFileRoute,
-} from '@tanstack/react-router';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEffect, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { toast, Toaster } from 'sonner';
+import { redirect, createFileRoute } from "@tanstack/react-router";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { toast, Toaster } from "sonner";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,13 +16,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useMutation } from '@tanstack/react-query';
-import { signIn, signUp } from '@/eden';
-import { useAuthStore } from '@/stores/auth';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import { signIn, signUp } from "@/eden";
+import { useAuthStore } from "@/stores/auth";
 
-export const Route = createFileRoute('/auth')({
+export const Route = createFileRoute("/auth")({
   component: Auth,
   beforeLoad: ({ context }) => {
     if (context.auth.isLoading) {
@@ -35,29 +30,29 @@ export const Route = createFileRoute('/auth')({
     }
     if (!context.auth.isLoading && context.auth.isAuth) {
       throw redirect({
-        to: '/',
+        to: "/",
       });
     }
   },
 });
 
 function Auth() {
-  const [activeTab, setActiveTab] = useState('signin');
+  const [activeTab, setActiveTab] = useState("signin");
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className='flex items-center justify-center min-h-screen bg-gray-100'>
       <Toaster richColors />
-      <Card className="w-[400px]">
+      <Card className='w-[400px]'>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsList className='grid w-full grid-cols-2'>
+            <TabsTrigger value='signin'>Sign In</TabsTrigger>
+            <TabsTrigger value='signup'>Sign Up</TabsTrigger>
           </TabsList>
           <CardContent>
-            <TabsContent value="signin">
+            <TabsContent value='signin'>
               <SignInTab />
             </TabsContent>
-            <TabsContent value="signup">
+            <TabsContent value='signup'>
               <SignUpTab />
             </TabsContent>
           </CardContent>
@@ -68,8 +63,8 @@ function Auth() {
 }
 
 const loginFormSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function SignInTab() {
@@ -81,7 +76,7 @@ function SignInTab() {
     mutationFn: signIn,
     onSuccess: async (data) => {
       await setUser(data.sessionId);
-      navigate({ to: '/' });
+      navigate({ to: "/" });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -91,8 +86,8 @@ function SignInTab() {
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -101,20 +96,24 @@ function SignInTab() {
   }
   return (
     <div>
-      <div className="my-6">
-        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Login to your account</h3>
-        <span className="text-md text-muted-foreground">Enter your credentials below</span>
+      <div className='my-6'>
+        <h3 className='scroll-m-20 text-2xl font-semibold tracking-tight'>
+          Login to your account
+        </h3>
+        <span className='text-md text-muted-foreground'>
+          Enter your credentials below
+        </span>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
           <FormField
             control={form.control}
-            name="email"
+            name='email'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="example@email.com" {...field} />
+                  <Input placeholder='example@email.com' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -122,23 +121,23 @@ function SignInTab() {
           />
           <FormField
             control={form.control}
-            name="password"
+            name='password'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder='' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormDescription>
-            <a href="/auth" className="underline">
+            <a href='/auth' className='underline'>
               Forgot password?
             </a>
           </FormDescription>
-          <Button type="submit" className="!mt-4 w-full" disabled={isPending}>
+          <Button type='submit' className='!mt-4 w-full' disabled={isPending}>
             Sign In
           </Button>
         </form>
@@ -148,10 +147,10 @@ function SignInTab() {
 }
 
 const signUpFormSchema = z.object({
-  firstName: z.string().min(2, 'Required'),
-  lastName: z.string().min(2, 'Required'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(2, "Required"),
+  lastName: z.string().min(2, "Required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 function SignUpTab() {
@@ -159,10 +158,10 @@ function SignUpTab() {
   const form = useForm<z.infer<typeof signUpFormSchema>>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
     },
   });
 
@@ -172,7 +171,7 @@ function SignUpTab() {
     mutationFn: signUp,
     onSuccess: async (data) => {
       await setUser(data.sessionId);
-      navigate({ to: '/' });
+      navigate({ to: "/" });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -184,34 +183,38 @@ function SignUpTab() {
   }
   return (
     <div>
-      <div className="my-6">
-        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Create an account</h3>
-        <span className="text-md text-muted-foreground">Enter your details below</span>
+      <div className='my-6'>
+        <h3 className='scroll-m-20 text-2xl font-semibold tracking-tight'>
+          Create an account
+        </h3>
+        <span className='text-md text-muted-foreground'>
+          Enter your details below
+        </span>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
           <FormField
             control={form.control}
-            name="email"
+            name='email'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="example@email.com" {...field} />
+                  <Input placeholder='example@email.com' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className='grid grid-cols-2 gap-4'>
             <FormField
               control={form.control}
-              name="firstName"
+              name='firstName'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>First name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Firas" {...field} />
+                    <Input placeholder='Firas' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,12 +222,12 @@ function SignUpTab() {
             />
             <FormField
               control={form.control}
-              name="lastName"
+              name='lastName'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Last name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jaber" {...field} />
+                    <Input placeholder='Jaber' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -233,21 +236,23 @@ function SignUpTab() {
           </div>
           <FormField
             control={form.control}
-            name="password"
+            name='password'
             render={({ field, fieldState }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder='' {...field} />
                 </FormControl>
                 {!fieldState.error && (
-                  <FormDescription>Password must be at least 8 characters</FormDescription>
+                  <FormDescription>
+                    Password must be at least 8 characters
+                  </FormDescription>
                 )}
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" className="!mt-6 w-full" disabled={isPending}>
+          <Button type='submit' className='!mt-6 w-full' disabled={isPending}>
             Sign up
           </Button>
         </form>

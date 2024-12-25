@@ -5,7 +5,7 @@ import { type AuthState, useAuthStore } from "@/stores/auth";
 import { Navbar } from "@/components/Navbar";
 import { useEffect } from "react";
 
-interface RouterContext {
+export interface RouterContext {
   auth: AuthState;
 }
 
