@@ -119,7 +119,7 @@ function BookmarkCard({
         <h3 className='font-semibold text-lg mb-2'>
           {bookmark.title || "Processing..."}
         </h3>
-        <p className='text-sm text-gray-600 mb-4 flex-1 break-words'>
+        <p className='text-sm text-gray-600 mb-4 flex-1 break-words line-clamp-3'>
           {bookmark.description ? bookmark.description : bookmark.url}
         </p>
         <div className='flex flex-wrap gap-2'>
