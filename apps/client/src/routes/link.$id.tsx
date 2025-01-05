@@ -1,15 +1,15 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Pencil,
   Plus,
   X,
-  Image as ImageIcon,
   ExternalLink,
   Trash2,
   Save,
-  AlertCircle,
   ArrowLeft,
+  EarthIcon,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,9 +35,18 @@ function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ["link", id],
     queryFn: () => getLink(id),
+    select: (data) => {
+      if (data) {
+        setTitle(data?.title || "");
+        setDescription(data?.description || "");
+        setOgImage(data?.image || "");
+        setUrl(data?.url || "");
+      }
+      return data;
+    },
   });
-  console.log(id);
-  console.log(data);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [title, setTitle] = useState("Example Bookmark Title");
   const [description, setDescription] = useState(
@@ -52,7 +61,6 @@ function Page() {
     "/placeholder.svg?height=200&width=300"
   );
   const [editingImage, setEditingImage] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState("");
   const [url, setUrl] = useState("https://example.com");
   const [editingUrl, setEditingUrl] = useState(false);
 
@@ -79,28 +87,11 @@ function Page() {
     }
   };
 
-  const handleImageUpdate = () => {
-    if (newImageUrl) {
-      setOgImage(newImageUrl);
-      setNewImageUrl("");
-      setEditingImage(false);
-    }
-  };
-
-  // const handleSave = () => {
-  //   toast({
-  //     title: "Changes saved",
-  //     description: "Your bookmark has been updated successfully.",
-  //   });
-  // };
-
-  // const handleDelete = () => {
-  //   toast({
-  //     title: "Bookmark deleted",
-  //     description: "Your bookmark has been removed.",
-  //     variant: "destructive",
-  //   });
-  // };
+  const dataIsUpdated =
+    title !== data?.title ||
+    description !== data?.description ||
+    ogImage !== data?.image ||
+    url !== data?.url;
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -112,38 +103,36 @@ function Page() {
         <Button variant='ghost' size='icon'>
           <ArrowLeft className='w-4 h-4' />
         </Button>
-        <span className='text-lg font-semibold'>Edit Bookmark</span>
+        {editingTitle ? (
+          <Input
+            value={title || ""}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => setEditingTitle(false)}
+            className='text-xl sm:text-2xl font-bold'
+            autoFocus
+          />
+        ) : (
+          <div className='flex items-center justify-between space-x-2'>
+            <h1 className='text-xl sm:text-2xl font-bold break-words'>
+              {title || "Untitled"}
+            </h1>
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={() => setEditingTitle(true)}
+            >
+              <Pencil className='h-4 w-4' />
+              <span className='sr-only'>Edit title</span>
+            </Button>
+          </div>
+        )}
       </div>
-      <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-2 sm:mt-6'>
+      <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-2'>
         <div className='flex-grow space-y-2'>
-          {editingTitle ? (
-            <Input
-              value={data.title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => setEditingTitle(false)}
-              className='text-xl sm:text-2xl font-bold'
-              autoFocus
-            />
-          ) : (
-            <div className='flex items-center justify-between'>
-              <h1 className='text-xl sm:text-2xl font-bold break-words'>
-                {data.title}
-              </h1>
-              <Button
-                variant='ghost'
-                size='icon'
-                onClick={() => setEditingTitle(true)}
-              >
-                <Pencil className='h-4 w-4' />
-                <span className='sr-only'>Edit title</span>
-              </Button>
-            </div>
-          )}
-
           {editingUrl ? (
             <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2'>
               <Input
-                value={data.url}
+                value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onBlur={() => setEditingUrl(false)}
                 className='flex-grow'
@@ -151,15 +140,18 @@ function Page() {
               />
             </div>
           ) : (
-            <div className='flex items-center justify-between text-sm '>
-              <a
-                href={data.url}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='hover:underline break-all text-muted-foreground'
-              >
-                {data.url}
-              </a>
+            <div className='flex items-center justify-between text-sm'>
+              <div className='flex items-center gap-2'>
+                <EarthIcon className='w-4 h-4 mr-2' />
+                <a
+                  href={url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='hover:underline break-all text-muted-foreground flex-grow'
+                >
+                  {url}
+                </a>
+              </div>
               <Button
                 variant='ghost'
                 size='icon'
@@ -173,7 +165,7 @@ function Page() {
 
           {editingDescription ? (
             <Textarea
-              value={data.description}
+              value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={() => setEditingDescription(false)}
               className='w-full'
@@ -182,27 +174,34 @@ function Page() {
             />
           ) : (
             <div className='flex items-start justify-between'>
-              <p className='text-gray-600 break-words'>{data.description}</p>
-              <Button
-                variant='ghost'
-                size='icon'
-                onClick={() => setEditingDescription(true)}
-              >
-                <Pencil className='h-4 w-4 flex-shrink-0' />
-                <span className='sr-only'>Edit description</span>
-              </Button>
+              <p className='text-gray-600 break-words'>{description}</p>
+              <div className='flex items-center gap-2'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='w-10!'
+                  onClick={() => setEditingDescription(true)}
+                >
+                  <Pencil className='h-4 w-4 flex-shrink-0' />
+                  <span className='sr-only'>Edit description</span>
+                </Button>
+              </div>
             </div>
           )}
 
           <div className='space-y-2'>
-            <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-2'>
               <h2 className='text-lg font-semibold'>Tags</h2>
               <Button
-                variant='outline'
-                size='sm'
+                variant='ghost'
+                size='icon'
                 onClick={() => setEditingTags(!editingTags)}
               >
-                {editingTags ? "Done" : "Edit Tags"}
+                {editingTags ? (
+                  <Check className='w-4 h-4' />
+                ) : (
+                  <Pencil className='w-4 h-4' />
+                )}
               </Button>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -267,7 +266,7 @@ function Page() {
         <div className='md:w-1/4 flex-shrink-0 space-y-2'>
           <div className='aspect-video w-full bg-gray-200 rounded-lg overflow-hidden relative group'>
             <img
-              src={data.image}
+              src={ogImage}
               alt='OG Image'
               className='w-full h-full object-cover'
             />
@@ -284,24 +283,13 @@ function Page() {
           {editingImage && (
             <div className='flex flex-col sm:flex-row items-start sm:items-center gap-2'>
               <Input
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
+                value={ogImage}
+                onChange={(e) => setOgImage(e.target.value)}
                 placeholder='Enter new image URL'
+                onBlur={() => setEditingImage(false)}
                 className='flex-grow'
+                autoFocus
               />
-              <div className='flex gap-2'>
-                <Button variant='outline' size='sm' onClick={handleImageUpdate}>
-                  Update
-                </Button>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  onClick={() => setEditingImage(false)}
-                >
-                  <X className='h-4 w-4' />
-                  <span className='sr-only'>Cancel</span>
-                </Button>
-              </div>
             </div>
           )}
         </div>
@@ -321,6 +309,7 @@ function Page() {
             onClick={() => {
               console.log("save");
             }}
+            disabled={!dataIsUpdated}
           >
             <Save className='w-4 h-4 mr-2' />
             Save Changes
@@ -332,7 +321,7 @@ function Page() {
             </a>
           </Button>
         </div>
-        <AlertDialog>
+        <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
           <AlertDialogTrigger asChild>
             <Button variant='destructive'>
               <Trash2 className='w-4 h-4 mr-2' />
@@ -341,19 +330,16 @@ function Page() {
           </AlertDialogTrigger>
           <AlertDialogContent className='sm:max-w-[425px]'>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                Are you sure you want to delete this bookmark?
-              </AlertDialogTitle>
+              <AlertDialogTitle>Delete Bookmark</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                bookmark.
+                Are you sure you want to delete this bookmark?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className='sm:justify-start'>
+            <AlertDialogFooter className='sm:justify-end'>
               <Button
                 variant='outline'
                 onClick={() => {
-                  console.log("cancel");
+                  setDeleteModalOpen(false);
                 }}
               >
                 Cancel
@@ -361,7 +347,7 @@ function Page() {
               <Button
                 variant='destructive'
                 onClick={() => {
-                  console.log("delete");
+                  setDeleteModalOpen(false);
                 }}
               >
                 Delete
