@@ -103,4 +103,33 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
+      .delete(
+        "/:id",
+        async ({ userId, params: { id }, error }) => {
+          const link = await drizzle
+            .select()
+            .from(linkTable)
+            .where(
+              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
+            )
+            .limit(1);
+
+          if (link.length === 0) {
+            throw error("Not Found", "Link not found");
+          }
+
+          if (link[0].userId !== userId) {
+            throw error("Forbidden", "You are not allowed to delete this link");
+          }
+
+          await drizzle.delete(linkTable).where(eq(linkTable.id, id));
+
+          return { status: "success", message: "Link deleted" };
+        },
+        {
+          params: t.Object({
+            id: t.String(),
+          }),
+        }
+      )
 );

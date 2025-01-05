@@ -66,3 +66,11 @@ export const getLink = async (id: string) => {
   }
   return res.data?.data;
 };
+
+export const deleteLink = async (id: string) => {
+  const res = await client.links({ id }).delete();
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+  return res.data;
+};

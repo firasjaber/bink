@@ -23,8 +23,9 @@ import {
   AlertDialogTrigger,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-import { useQuery } from "@tanstack/react-query";
-import { getLink } from "../eden";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { deleteLink, getLink } from "../eden";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/link/$id")({
   component: Page,
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/link/$id")({
 
 function Page() {
   const { id } = Route.useParams();
+  const navigate = Route.useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["link", id],
     queryFn: () => getLink(id),
@@ -93,6 +95,19 @@ function Page() {
     ogImage !== data?.image ||
     url !== data?.url;
 
+  const handleDelete = useMutation({
+    mutationFn: () => deleteLink(id),
+    onSuccess: () => {
+      setDeleteModalOpen(false);
+      toast.success("Bookmark deleted");
+      navigate({ to: "/" });
+    },
+    onError: (error) => {
+      setDeleteModalOpen(false);
+      toast.error(error.message);
+    },
+  });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -100,7 +115,11 @@ function Page() {
   return (
     <div className='mx-auto p-4 sm:p-6 container sm:px-12'>
       <div className='flex items-center gap-2'>
-        <Button variant='ghost' size='icon'>
+        <Button
+          variant='ghost'
+          size='icon'
+          onClick={() => navigate({ to: "/" })}
+        >
           <ArrowLeft className='w-4 h-4' />
         </Button>
         {editingTitle ? (
@@ -142,7 +161,7 @@ function Page() {
           ) : (
             <div className='flex items-center justify-between text-sm'>
               <div className='flex items-center gap-2'>
-                <EarthIcon className='w-4 h-4 mr-2' />
+                <EarthIcon className='w-4 h-4' />
                 <a
                   href={url}
                   target='_blank'
@@ -347,10 +366,11 @@ function Page() {
               <Button
                 variant='destructive'
                 onClick={() => {
-                  setDeleteModalOpen(false);
+                  handleDelete.mutate();
                 }}
+                disabled={handleDelete.isPending}
               >
-                Delete
+                {handleDelete.isPending ? "Deleting..." : "Delete"}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
