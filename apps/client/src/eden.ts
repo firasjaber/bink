@@ -74,3 +74,19 @@ export const deleteLink = async (id: string) => {
   }
   return res.data;
 };
+
+export const updateLink = async (
+  id: string,
+  data: {
+    title?: string;
+    description?: string;
+    image?: string;
+    url?: string;
+  }
+) => {
+  const res = await client.links({ id }).put(data);
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+  return res.data;
+};

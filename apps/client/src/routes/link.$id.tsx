@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pencil,
   Plus,
@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   EarthIcon,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,10 @@ import {
   AlertDialogTrigger,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { deleteLink, getLink } from "../eden";
-import { toast } from "sonner";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteLink, getLink, updateLink } from "../eden";
+import { toast, Toaster } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/link/$id")({
   component: Page,
@@ -34,37 +36,35 @@ export const Route = createFileRoute("/link/$id")({
 function Page() {
   const { id } = Route.useParams();
   const navigate = Route.useNavigate();
-  const { data, isLoading } = useQuery({
+
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useQuery({
     queryKey: ["link", id],
     queryFn: () => getLink(id),
-    select: (data) => {
-      if (data) {
-        setTitle(data?.title || "");
-        setDescription(data?.description || "");
-        setOgImage(data?.image || "");
-        setUrl(data?.url || "");
-      }
-      return data;
-    },
   });
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  const [title, setTitle] = useState("Example Bookmark Title");
-  const [description, setDescription] = useState(
-    "This is a sample description for the bookmarked link."
-  );
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [selectedTags, setSelectedTags] = useState(["React", "JavaScript"]);
   const [editingTags, setEditingTags] = useState(false);
   const [newTag, setNewTag] = useState("");
-  const [ogImage, setOgImage] = useState(
-    "/placeholder.svg?height=200&width=300"
-  );
+  const [ogImage, setOgImage] = useState("");
   const [editingImage, setEditingImage] = useState(false);
-  const [url, setUrl] = useState("https://example.com");
+  const [url, setUrl] = useState("");
   const [editingUrl, setEditingUrl] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setTitle(data?.title || "");
+      setDescription(data?.description || "");
+      setOgImage(data?.image || "");
+      setUrl(data?.url || "");
+    }
+  }, [data]);
 
   const allTags = [
     "React",
@@ -108,12 +108,25 @@ function Page() {
     },
   });
 
-  if (isLoading) {
+  const handleUpdate = useMutation({
+    mutationFn: () =>
+      updateLink(id, { title, description, image: ogImage, url }),
+    onSuccess: () => {
+      toast.success("Bookmark updated");
+      queryClient.invalidateQueries({ queryKey: ["link", id] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  if (isLoading || !data) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className='mx-auto p-4 sm:p-6 container sm:px-12'>
+      <Toaster richColors />
       <div className='flex items-center gap-2'>
         <Button
           variant='ghost'
@@ -140,7 +153,14 @@ function Page() {
               size='icon'
               onClick={() => setEditingTitle(true)}
             >
-              <Pencil className='h-4 w-4' />
+              <Pencil
+                className={cn(
+                  "h-4 w-4",
+                  data?.title !== title
+                    ? "text-orange-400"
+                    : "text-muted-foreground"
+                )}
+              />
               <span className='sr-only'>Edit title</span>
             </Button>
           </div>
@@ -176,7 +196,14 @@ function Page() {
                 size='icon'
                 onClick={() => setEditingUrl(true)}
               >
-                <Pencil className='h-4 w-4 flex-shrink-0' />
+                <Pencil
+                  className={cn(
+                    "h-4 w-4 flex-shrink-0",
+                    data?.url !== url
+                      ? "text-orange-400"
+                      : "text-muted-foreground"
+                  )}
+                />
                 <span className='sr-only'>Edit URL</span>
               </Button>
             </div>
@@ -201,7 +228,14 @@ function Page() {
                   className='w-10!'
                   onClick={() => setEditingDescription(true)}
                 >
-                  <Pencil className='h-4 w-4 flex-shrink-0' />
+                  <Pencil
+                    className={cn(
+                      "h-4 w-4 flex-shrink-0",
+                      data?.description !== description
+                        ? "text-orange-400"
+                        : "text-muted-foreground"
+                    )}
+                  />
                   <span className='sr-only'>Edit description</span>
                 </Button>
               </div>
@@ -295,7 +329,14 @@ function Page() {
               className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity'
               onClick={() => setEditingImage(true)}
             >
-              <Pencil className='h-4 w-4' />
+              <Pencil
+                className={cn(
+                  "h-4 w-4",
+                  data?.image !== ogImage
+                    ? "text-orange-400"
+                    : "text-muted-foreground"
+                )}
+              />
               <span className='sr-only'>Edit image</span>
             </Button>
           </div>
@@ -326,12 +367,16 @@ function Page() {
           <Button
             variant='default'
             onClick={() => {
-              console.log("save");
+              handleUpdate.mutate();
             }}
-            disabled={!dataIsUpdated}
+            disabled={!dataIsUpdated || handleUpdate.isPending}
           >
-            <Save className='w-4 h-4 mr-2' />
-            Save Changes
+            {handleUpdate.isPending ? (
+              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+            ) : (
+              <Save className='w-4 h-4 mr-2' />
+            )}
+            {handleUpdate.isPending ? "Saving..." : "Save Changes"}
           </Button>
           <Button variant='outline' asChild>
             <a href={url} target='_blank' rel='noopener noreferrer'>
@@ -370,7 +415,11 @@ function Page() {
                 }}
                 disabled={handleDelete.isPending}
               >
-                {handleDelete.isPending ? "Deleting..." : "Delete"}
+                {handleDelete.isPending ? (
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                ) : (
+                  "Delete"
+                )}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

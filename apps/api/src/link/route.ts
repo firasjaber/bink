@@ -132,4 +132,47 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
+      .put(
+        "/:id",
+        async ({ userId, params: { id }, body, error }) => {
+          const link = await drizzle
+            .select()
+            .from(linkTable)
+            .where(
+              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
+            )
+            .limit(1);
+
+          if (link.length === 0) {
+            throw error("Not Found", "Link not found");
+          }
+
+          if (link[0].userId !== userId) {
+            throw error("Forbidden", "You are not allowed to update this link");
+          }
+
+          await drizzle
+            .update(linkTable)
+            .set({
+              title: body.title ?? undefined,
+              description: body.description ?? undefined,
+              image: body.image ?? undefined,
+              url: body.url ?? undefined,
+            })
+            .where(eq(linkTable.id, id));
+
+          return { status: "success", message: "Link updated" };
+        },
+        {
+          body: t.Object({
+            title: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            image: t.Optional(t.String()),
+            url: t.Optional(t.String()),
+          }),
+          params: t.Object({
+            id: t.String(),
+          }),
+        }
+      )
 );
