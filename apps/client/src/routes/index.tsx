@@ -123,8 +123,14 @@ function BookmarkCard({
           {bookmark.description ? bookmark.description : bookmark.url}
         </p>
         <div className='flex flex-wrap gap-2'>
-          <Badge variant='secondary'>tech</Badge>
-          <Badge variant='secondary'>meme</Badge>
+          {bookmark.tags.map((tag) => (
+            <Badge
+              key={tag}
+              className='bg-primary/40 border-2 border-primary/20 text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center hover:bg-primary/80 hover:border-primary transition-all ease-in-out duration-300 cursor-pointer'
+            >
+              {tag}
+            </Badge>
+          ))}
         </div>
       </div>
     </div>

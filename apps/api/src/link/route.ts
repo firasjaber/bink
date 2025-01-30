@@ -1,13 +1,15 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import { sql, eq, and, desc } from "drizzle-orm";
+import { sql, eq, and, desc, notInArray } from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
 import {
   insertLinkSchema,
   insertScrapingJobSchema,
   LinkStateEnum,
   linkTable,
+  linkTagTable,
   scrapingJobs,
+  linkTagsToLinks,
 } from "db/src/schema";
 import { isURLReachable } from "./helper";
 
@@ -37,11 +39,30 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             image: linkTable.image,
             state: linkTable.state,
             createdAt: linkTable.createdAt,
+            tags: sql<string[]>`array_agg(${linkTagTable.name})`,
           })
           .from(linkTable)
-          .where(sql`user_id = ${userId}`)
+          .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
+          .leftJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
+          .where(sql`${linkTable.userId} = ${userId}`)
+          .groupBy(
+            linkTable.id,
+            linkTable.url,
+            linkTable.title,
+            linkTable.description,
+            linkTable.image,
+            linkTable.state,
+            linkTable.createdAt
+          )
           .orderBy(desc(linkTable.createdAt));
-        return { data: links };
+
+        // Transform the response to handle null tags
+        const transformedLinks = links.map((link) => ({
+          ...link,
+          tags: link.tags?.[0] === null ? [] : link.tags ?? [],
+        }));
+
+        return { data: transformedLinks };
       })
       .get(
         "/:id",
@@ -175,4 +196,33 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
+      .get("/:id/tags", async ({ userId, params: { id }, error }) => {
+        const linkTags = await drizzle
+          .select({
+            id: linkTagTable.id,
+            name: linkTagTable.name,
+            color: linkTagTable.color,
+            isSystem: linkTagTable.isSystem,
+          })
+          .from(linkTagsToLinks)
+          .innerJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
+          .where(eq(linkTagsToLinks.linkId, id));
+
+        const otherAvailableTags = await drizzle
+          .select()
+          .from(linkTagTable)
+          .where(
+            and(
+              eq(linkTagTable.isSystem, true),
+              notInArray(
+                linkTagTable.id,
+                linkTags.map((tag) => tag.id)
+              )
+            )
+          );
+
+        return {
+          data: { linkTags: linkTags, otherAvailableTags: otherAvailableTags },
+        };
+      })
 );

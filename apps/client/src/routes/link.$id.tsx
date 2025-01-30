@@ -25,7 +25,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteLink, getLink, updateLink } from "../eden";
+import { deleteLink, getLink, updateLink, getLinkTags } from "../eden";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,18 @@ function Page() {
     queryKey: ["link", id],
     queryFn: () => getLink(id),
   });
+
+  const {
+    data: tags,
+    isLoading: tagsLoading,
+    error: tagsError,
+  } = useQuery({
+    queryKey: ["linkTags", id],
+    queryFn: () => getLinkTags(id),
+  });
+
+  console.log(tags);
+  console.log(tagsError);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -261,12 +273,12 @@ function Page() {
               {selectedTags.length === 0 && (
                 <span className='text-muted-foreground'>No tags</span>
               )}
-              {selectedTags.map((tag) => (
+              {tags?.linkTags.map((tag) => (
                 <span
-                  key={tag}
+                  key={tag.id}
                   className='bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center'
                 >
-                  {tag}
+                  {tag.name}
                   {editingTags && (
                     <Button
                       variant='ghost'
@@ -282,7 +294,7 @@ function Page() {
               ))}
               {editingTags && (
                 <>
-                  {allTags
+                  {tags?.otherAvailableTags
                     .filter((tag) => !selectedTags.includes(tag))
                     .map((tag) => (
                       <Button
