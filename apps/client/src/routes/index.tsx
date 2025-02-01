@@ -125,10 +125,10 @@ function BookmarkCard({
         <div className='flex flex-wrap gap-2'>
           {bookmark.tags.map((tag) => (
             <Badge
-              key={tag}
-              className='bg-primary/40 border-2 border-primary/20 text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center hover:bg-primary/80 hover:border-primary transition-all ease-in-out duration-300 cursor-pointer'
+              key={tag.name}
+              className={`bg-[${tag.color}] border-2 border-[${tag.color}]/80 text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center`}
             >
-              {tag}
+              {tag.name}
             </Badge>
           ))}
         </div>

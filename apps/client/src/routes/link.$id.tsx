@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Pencil,
   Plus,
@@ -33,6 +33,19 @@ export const Route = createFileRoute("/link/$id")({
   component: Page,
 });
 
+const tagColors = [
+  "#EF4444", // red
+  "#F97316", // orange
+  "#F59E0B", // amber
+  "#84CC16", // lime
+  "#10B981", // emerald
+  "#06B6D4", // cyan
+  "#3B82F6", // blue
+  "#6366F1", // indigo
+  "#8B5CF6", // violet
+  "#EC4899", // pink
+];
+
 function Page() {
   const { id } = Route.useParams();
   const navigate = Route.useNavigate();
@@ -63,6 +76,10 @@ function Page() {
   const [editingImage, setEditingImage] = useState(false);
   const [url, setUrl] = useState("");
   const [editingUrl, setEditingUrl] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("#3B82F6");
+
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (data) {
@@ -80,6 +97,33 @@ function Page() {
       setSelectedTags(tagMap);
     }
   }, [tags]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowColorPicker(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowColorPicker(false);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [showColorPicker]);
 
   const handleTagToggle = (tag: {
     id: string;
@@ -107,11 +151,13 @@ function Page() {
       const newTagObj = {
         id: `new-${newTag}`,
         name: newTag,
-        color: "#000000",
+        color: selectedColor,
         isSystem: false,
       };
       setSelectedTags((prev) => new Map(prev).set(newTagObj.id, newTagObj));
       setNewTag("");
+      setSelectedColor("#3B82F6");
+      setShowColorPicker(false);
     }
   };
 
@@ -292,7 +338,7 @@ function Page() {
               {Array.from(selectedTags.values()).map((tag) => (
                 <span
                   key={tag.id}
-                  className='bg-primary h-[34px] text-primary-foreground px-2 py-1 rounded-sm text-sm flex items-center'
+                  className={`h-[34px] text-primary-foreground px-2 py-1 rounded-sm text-sm flex items-center bg-[${tag.color}]`}
                 >
                   {tag.name}
                   {editingTags && (
@@ -324,7 +370,7 @@ function Page() {
                         size='sm'
                         className={cn(
                           selectedTags.has(tag.id)
-                            ? "h-[34px] bg-primary text-primary-foreground"
+                            ? `h-[34px] text-primary-foreground bg-[${tag.color}]`
                             : "h-[34px] bg-muted text-muted-foreground"
                         )}
                         onClick={() => handleTagToggle(tag)}
@@ -332,7 +378,7 @@ function Page() {
                         {tag.name}
                       </Button>
                     ))}
-                  <div className='flex items-center w-full sm:w-auto -mt-0.5'>
+                  <div className='flex items-center w-full sm:w-auto -mt-0.5 relative'>
                     <Input
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
@@ -342,12 +388,43 @@ function Page() {
                     <Button
                       variant='ghost'
                       size='icon'
+                      className='h-8 w-8 ml-1'
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      style={{ color: selectedColor }}
+                    >
+                      <div
+                        className='w-4 h-4 rounded-full'
+                        style={{ backgroundColor: selectedColor }}
+                      />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='icon'
                       className='h-8 w-8'
                       onClick={handleAddNewTag}
                     >
                       <Plus className='h-4 w-4' />
                       <span className='sr-only'>Add new tag</span>
                     </Button>
+
+                    {showColorPicker && (
+                      <div
+                        ref={colorPickerRef}
+                        className='absolute top-full mt-1 p-2 bg-white rounded-md shadow-lg z-10 flex gap-1 flex-wrap max-w-[200px]'
+                      >
+                        {tagColors.map((color) => (
+                          <button
+                            key={color}
+                            className='w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition-transform'
+                            style={{ backgroundColor: color }}
+                            onClick={() => {
+                              setSelectedColor(color);
+                              setShowColorPicker(false);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}

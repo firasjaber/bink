@@ -39,7 +39,17 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             image: linkTable.image,
             state: linkTable.state,
             createdAt: linkTable.createdAt,
-            tags: sql<string[]>`array_agg(${linkTagTable.name})`,
+            tags: sql<Array<{ name: string; color: string }>>`
+              array_agg(
+                CASE 
+                  WHEN ${linkTagTable.name} IS NOT NULL 
+                  THEN json_build_object(
+                    'name', ${linkTagTable.name},
+                    'color', ${linkTagTable.color}
+                  )
+                  ELSE NULL 
+                END
+              )`,
           })
           .from(linkTable)
           .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
