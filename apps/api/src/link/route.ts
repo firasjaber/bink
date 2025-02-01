@@ -207,6 +207,13 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           .from(linkTagsToLinks)
           .innerJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
           .where(eq(linkTagsToLinks.linkId, id));
+        if (linkTags.length === 0) {
+          const allSystemTags = await drizzle
+            .select()
+            .from(linkTagTable)
+            .where(eq(linkTagTable.isSystem, true));
+          return { data: { linkTags: [], otherAvailableTags: allSystemTags } };
+        }
 
         const otherAvailableTags = await drizzle
           .select()

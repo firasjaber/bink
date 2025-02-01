@@ -38,22 +38,15 @@ function Page() {
   const navigate = Route.useNavigate();
 
   const queryClient = useQueryClient();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["link", id],
     queryFn: () => getLink(id),
   });
 
-  const {
-    data: tags,
-    isLoading: tagsLoading,
-    error: tagsError,
-  } = useQuery({
+  const { data: tags } = useQuery({
     queryKey: ["linkTags", id],
     queryFn: () => getLinkTags(id),
   });
-
-  console.log(tags);
-  console.log(tagsError);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -61,7 +54,9 @@ function Page() {
   const [description, setDescription] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-  const [selectedTags, setSelectedTags] = useState(["React", "JavaScript"]);
+  const [selectedTags, setSelectedTags] = useState<
+    Map<string, { id: string; name: string; color: string; isSystem: boolean }>
+  >(new Map());
   const [editingTags, setEditingTags] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [ogImage, setOgImage] = useState("");
@@ -78,25 +73,44 @@ function Page() {
     }
   }, [data]);
 
-  const allTags = [
-    "React",
-    "JavaScript",
-    "CSS",
-    "HTML",
-    "TypeScript",
-    "Node.js",
-    "Next.js",
-  ];
+  useEffect(() => {
+    if (tags && tags.linkTags.length > 0) {
+      console.log(tags.linkTags);
+      const tagMap = new Map(tags.linkTags.map((tag) => [tag.id, tag]));
+      setSelectedTags(tagMap);
+    }
+  }, [tags]);
 
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+  const handleTagToggle = (tag: {
+    id: string;
+    name: string;
+    color: string;
+    isSystem: boolean;
+  }) => {
+    console.log(tag);
+    setSelectedTags((prev) => {
+      const newMap = new Map(prev);
+      if (newMap.has(tag.id)) {
+        newMap.delete(tag.id);
+      } else {
+        newMap.set(tag.id, tag);
+      }
+      return newMap;
+    });
   };
 
   const handleAddNewTag = () => {
-    if (newTag && !selectedTags.includes(newTag)) {
-      setSelectedTags((prev) => [...prev, newTag]);
+    if (
+      newTag &&
+      !Array.from(selectedTags.values()).some((t) => t.name === newTag)
+    ) {
+      const newTagObj = {
+        id: `new-${newTag}`,
+        name: newTag,
+        color: "#000000",
+        isSystem: false,
+      };
+      setSelectedTags((prev) => new Map(prev).set(newTagObj.id, newTagObj));
       setNewTag("");
     }
   };
@@ -270,13 +284,15 @@ function Page() {
               </Button>
             </div>
             <div className='flex flex-wrap gap-2'>
-              {selectedTags.length === 0 && (
-                <span className='text-muted-foreground'>No tags</span>
-              )}
-              {tags?.linkTags.map((tag) => (
+              {tags?.linkTags.length === 0 &&
+                selectedTags.size === 0 &&
+                !editingTags && (
+                  <span className='text-muted-foreground'>No tags</span>
+                )}
+              {Array.from(selectedTags.values()).map((tag) => (
                 <span
                   key={tag.id}
-                  className='bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center'
+                  className='bg-primary h-[34px] text-primary-foreground px-2 py-1 rounded-sm text-sm flex items-center'
                 >
                   {tag.name}
                   {editingTags && (
@@ -295,27 +311,38 @@ function Page() {
               {editingTags && (
                 <>
                   {tags?.otherAvailableTags
-                    .filter((tag) => !selectedTags.includes(tag))
+                    .filter(
+                      (tag) =>
+                        !Array.from(selectedTags.values()).some(
+                          (t) => t.id === tag.id
+                        )
+                    )
                     .map((tag) => (
                       <Button
-                        key={tag}
+                        key={tag.id}
                         variant='outline'
                         size='sm'
+                        className={cn(
+                          selectedTags.has(tag.id)
+                            ? "h-[34px] bg-primary text-primary-foreground"
+                            : "h-[34px] bg-muted text-muted-foreground"
+                        )}
                         onClick={() => handleTagToggle(tag)}
                       >
-                        {tag}
+                        {tag.name}
                       </Button>
                     ))}
-                  <div className='flex items-center w-full sm:w-auto'>
+                  <div className='flex items-center w-full sm:w-auto -mt-0.5'>
                     <Input
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
-                      placeholder='New tag'
-                      className='w-full sm:w-24 h-8 text-sm'
+                      placeholder='add tag'
+                      className='w-full sm:w-20 h-8 text-sm'
                     />
                     <Button
                       variant='ghost'
                       size='icon'
+                      className='h-8 w-8'
                       onClick={handleAddNewTag}
                     >
                       <Plus className='h-4 w-4' />
