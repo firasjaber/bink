@@ -99,3 +99,14 @@ export const updateLink = async (
   }
   return res.data;
 };
+
+export const updateLinkTags = async (
+  id: string,
+  data: { tags: { id?: string; name: string; color: string }[] }
+) => {
+  const res = await client.links({ id }).tags.put(data);
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
+  return res.data;
+};

@@ -25,7 +25,13 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteLink, getLink, updateLink, getLinkTags } from "../eden";
+import {
+  deleteLink,
+  getLink,
+  updateLink,
+  getLinkTags,
+  updateLinkTags,
+} from "../eden";
 import { toast, Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -199,6 +205,34 @@ function Page() {
       toast.error(error.message);
     },
   });
+
+  const handleUpdateTags = useMutation({
+    mutationFn: () =>
+      updateLinkTags(id, {
+        tags: Array.from(selectedTags.values()).map((tag) => ({
+          id: tag.id.startsWith("new-") ? undefined : tag.id,
+          name: tag.name,
+          color: tag.color,
+        })),
+      }),
+    onSuccess: () => {
+      toast.success("Links tags updated");
+      queryClient.invalidateQueries({ queryKey: ["link", id] });
+      queryClient.invalidateQueries({ queryKey: ["linkTags", id] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleSaveChanges = () => {
+    if (dataIsUpdated) {
+      handleUpdate.mutate();
+    }
+    if (tagsUpdated()) {
+      handleUpdateTags.mutate();
+    }
+  };
 
   if (isLoading || !data) {
     return <div>Loading...</div>;
@@ -497,17 +531,21 @@ function Page() {
         <div className='flex flex-wrap gap-2'>
           <Button
             variant='default'
-            onClick={() => {
-              handleUpdate.mutate();
-            }}
-            disabled={!dataIsUpdated || handleUpdate.isPending}
+            onClick={handleSaveChanges}
+            disabled={
+              (!dataIsUpdated && !tagsUpdated()) ||
+              handleUpdate.isPending ||
+              handleUpdateTags.isPending
+            }
           >
-            {handleUpdate.isPending ? (
+            {handleUpdate.isPending || handleUpdateTags.isPending ? (
               <Loader2 className='w-4 h-4 mr-2 animate-spin' />
             ) : (
               <Save className='w-4 h-4 mr-2' />
             )}
-            {handleUpdate.isPending ? "Saving..." : "Save Changes"}
+            {handleUpdate.isPending || handleUpdateTags.isPending
+              ? "Saving..."
+              : "Save Changes"}
           </Button>
           <Button variant='outline' asChild>
             <a href={url} target='_blank' rel='noopener noreferrer'>

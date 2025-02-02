@@ -242,4 +242,70 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           data: { linkTags: linkTags, otherAvailableTags: otherAvailableTags },
         };
       })
+      .put(
+        "/:id/tags",
+        async ({ userId, params: { id }, body, error }) => {
+          return await drizzle.transaction(async (tx) => {
+            // First verify the link exists and belongs to the user
+            const link = await tx
+              .select()
+              .from(linkTable)
+              .where(
+                and(
+                  eq(linkTable.id, id),
+                  eq(linkTable.userId, userId as string)
+                )
+              )
+              .limit(1);
+
+            if (link.length === 0) {
+              throw error("Not Found", "Link not found");
+            }
+
+            // Delete existing tag relations for this link
+            await tx
+              .delete(linkTagsToLinks)
+              .where(eq(linkTagsToLinks.linkId, id));
+
+            // Process each tag
+            for (const tag of body.tags) {
+              let tagId = tag.id;
+
+              // If no id, create new tag
+              if (!tagId) {
+                const [newTag] = await tx
+                  .insert(linkTagTable)
+                  .values({
+                    name: tag.name,
+                    color: tag.color,
+                    userId,
+                    isSystem: false,
+                  })
+                  .returning({ id: linkTagTable.id });
+
+                tagId = newTag.id;
+              }
+
+              // Create relation between link and tag
+              await tx.insert(linkTagsToLinks).values({
+                linkId: id,
+                tagId,
+              });
+            }
+
+            return { status: "success", message: "Tags updated successfully" };
+          });
+        },
+        {
+          body: t.Object({
+            tags: t.Array(
+              t.Object({
+                id: t.Optional(t.String()),
+                name: t.String(),
+                color: t.String(),
+              })
+            ),
+          }),
+        }
+      )
 );
