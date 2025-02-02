@@ -167,6 +167,14 @@ function Page() {
     ogImage !== data?.image ||
     url !== data?.url;
 
+  const tagsUpdated = () => {
+    const currentTagIds = new Set(Array.from(selectedTags.keys()));
+    const originalTagIds = new Set(tags?.linkTags.map((tag) => tag.id));
+
+    if (currentTagIds.size !== originalTagIds.size) return true;
+    return Array.from(currentTagIds).some((id) => !originalTagIds.has(id));
+  };
+
   const handleDelete = useMutation({
     mutationFn: () => deleteLink(id),
     onSuccess: () => {
@@ -325,7 +333,14 @@ function Page() {
                 {editingTags ? (
                   <Check className='w-4 h-4' />
                 ) : (
-                  <Pencil className='w-4 h-4' />
+                  <Pencil
+                    className={cn(
+                      "w-4 h-4",
+                      tagsUpdated()
+                        ? "text-orange-400"
+                        : "text-muted-foreground"
+                    )}
+                  />
                 )}
               </Button>
             </div>
