@@ -33,7 +33,9 @@ import {
   updateLinkTags,
 } from "../eden";
 import { toast, Toaster } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, debounce } from "@/lib/utils";
+import NoteEditor from "@/components/editor/Editor";
+import type { JSONContent } from "novel";
 
 export const Route = createFileRoute("/link/$id")({
   component: Page,
@@ -233,6 +235,18 @@ function Page() {
       handleUpdateTags.mutate();
     }
   };
+
+  const [notes, setNotes] = useState<JSONContent>({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Add your note here, type / to see commands" },
+        ],
+      },
+    ],
+  });
 
   if (isLoading || !data) {
     return <div>Loading...</div>;
@@ -520,11 +534,12 @@ function Page() {
         </div>
       </div>
 
-      <div className='border-t pt-2 mt-6'>
+      <div className='border-t pt-6 mt-4'>
         <h2 className='text-lg font-semibold mb-4'>Notes</h2>
-        <div className='bg-gray-100 p-4 rounded-lg text-gray-500 text-center'>
-          Coming soon...
-        </div>
+        <NoteEditor
+          initialValue={notes}
+          onChange={(value) => setNotes(value)}
+        />
       </div>
 
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6'>

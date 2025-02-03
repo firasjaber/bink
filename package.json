@@ -1,6 +1,5 @@
 {
   "name": "lin",
-  "workspaces": ["apps/*", "packages/*"],
   "devDependencies": {
     "@tanstack/router-devtools": "^1.44.2",
     "@tanstack/router-plugin": "^1.44.2",
@@ -15,5 +14,9 @@
     "lint:fix": "biome lint --fix",
     "format": "biome format --write",
     "format:check": "biome format"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
