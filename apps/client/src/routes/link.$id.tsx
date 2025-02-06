@@ -54,6 +54,19 @@ const tagColors = [
   "#EC4899", // pink
 ];
 
+// Default notes state when no notes exist
+const DEFAULT_NOTES: JSONContent = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        { type: "text", text: "Add your note here, type / to see commands" },
+      ],
+    },
+  ],
+};
+
 function Page() {
   const { id } = Route.useParams();
   const navigate = Route.useNavigate();
@@ -89,12 +102,20 @@ function Page() {
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
+  // Initialize with DEFAULT_NOTES
+  const [notes, setNotes] = useState<JSONContent>({});
+
   useEffect(() => {
     if (data) {
       setTitle(data?.title || "");
       setDescription(data?.description || "");
       setOgImage(data?.image || "");
       setUrl(data?.url || "");
+      // Only set notes if they exist, otherwise keep DEFAULT_NOTES
+      if (data.notes) {
+        console.log("Setting notes from data:", data.notes);
+        setNotes(data.notes);
+      }
     }
   }, [data]);
 
@@ -169,11 +190,13 @@ function Page() {
     }
   };
 
+  // Update the comparison to handle undefined notes
   const dataIsUpdated =
     title !== data?.title ||
     description !== data?.description ||
     ogImage !== data?.image ||
-    url !== data?.url;
+    url !== data?.url ||
+    JSON.stringify(notes) !== JSON.stringify(data?.notes || DEFAULT_NOTES);
 
   const tagsUpdated = () => {
     const currentTagIds = new Set(Array.from(selectedTags.keys()));
@@ -198,7 +221,13 @@ function Page() {
 
   const handleUpdate = useMutation({
     mutationFn: () =>
-      updateLink(id, { title, description, image: ogImage, url }),
+      updateLink(id, {
+        title,
+        description,
+        image: ogImage,
+        url,
+        notes,
+      }),
     onSuccess: () => {
       toast.success("Bookmark updated");
       queryClient.invalidateQueries({ queryKey: ["link", id] });
@@ -235,18 +264,6 @@ function Page() {
       handleUpdateTags.mutate();
     }
   };
-
-  const [notes, setNotes] = useState<JSONContent>({
-    type: "doc",
-    content: [
-      {
-        type: "paragraph",
-        content: [
-          { type: "text", text: "Add your note here, type / to see commands" },
-        ],
-      },
-    ],
-  });
 
   if (isLoading || !data) {
     return <div>Loading...</div>;

@@ -189,6 +189,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
               description: body.description ?? undefined,
               image: body.image ?? undefined,
               url: body.url ?? undefined,
+              notes: body.notes ?? undefined,
             })
             .where(eq(linkTable.id, id));
 
@@ -200,6 +201,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             description: t.Optional(t.String()),
             image: t.Optional(t.String()),
             url: t.Optional(t.String()),
+            notes: t.Optional(t.String()),
           }),
           params: t.Object({
             id: t.String(),

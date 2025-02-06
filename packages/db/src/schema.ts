@@ -9,6 +9,7 @@ import {
   uuid,
   varchar,
   integer,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
@@ -76,6 +77,7 @@ export const linkTable = pgTable("link", {
   description: text("description"),
   image: text("image"),
   state: linkStateEnum("state").notNull(),
+  notes: jsonb("notes"),
   userId: uuid("user_id")
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade" }),

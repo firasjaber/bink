@@ -1,3 +1,4 @@
+import type { JSONContent } from "novel";
 import { treaty } from "@elysiajs/eden";
 import type { App } from "../../api/src";
 
@@ -91,9 +92,13 @@ export const updateLink = async (
     description?: string;
     image?: string;
     url?: string;
+    notes?: JSONContent;
   }
 ) => {
-  const res = await client.links({ id }).put(data);
+  const res = await client.links({ id }).put({
+    ...data,
+    notes: data.notes ? JSON.stringify(data.notes) : undefined,
+  });
   if (res.error) {
     throw new Error(res.error.value as string);
   }
