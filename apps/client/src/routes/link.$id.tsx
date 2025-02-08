@@ -36,6 +36,7 @@ import { toast, Toaster } from "sonner";
 import { cn, debounce } from "@/lib/utils";
 import NoteEditor from "@/components/editor/Editor";
 import type { JSONContent } from "novel";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/link/$id")({
   component: Page,
@@ -102,8 +103,7 @@ function Page() {
 
   const colorPickerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize with DEFAULT_NOTES
-  const [notes, setNotes] = useState<JSONContent>({});
+  const [notes, setNotes] = useState<JSONContent | undefined>(undefined);
 
   useEffect(() => {
     if (data) {
@@ -111,17 +111,16 @@ function Page() {
       setDescription(data?.description || "");
       setOgImage(data?.image || "");
       setUrl(data?.url || "");
-      // Only set notes if they exist, otherwise keep DEFAULT_NOTES
       if (data.notes) {
-        console.log("Setting notes from data:", data.notes);
         setNotes(data.notes);
+      } else {
+        setNotes(DEFAULT_NOTES);
       }
     }
   }, [data]);
 
   useEffect(() => {
     if (tags && tags.linkTags.length > 0) {
-      console.log(tags.linkTags);
       const tagMap = new Map(tags.linkTags.map((tag) => [tag.id, tag]));
       setSelectedTags(tagMap);
     }
@@ -160,7 +159,6 @@ function Page() {
     color: string;
     isSystem: boolean;
   }) => {
-    console.log(tag);
     setSelectedTags((prev) => {
       const newMap = new Map(prev);
       if (newMap.has(tag.id)) {
@@ -553,10 +551,14 @@ function Page() {
 
       <div className='border-t pt-6 mt-4'>
         <h2 className='text-lg font-semibold mb-4'>Notes</h2>
-        <NoteEditor
-          initialValue={notes}
-          onChange={(value) => setNotes(value)}
-        />
+        {notes ? (
+          <NoteEditor
+            initialValue={notes}
+            onChange={(value) => setNotes(value)}
+          />
+        ) : (
+          <Skeleton className='h-[300px] w-full' />
+        )}
       </div>
 
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6'>
