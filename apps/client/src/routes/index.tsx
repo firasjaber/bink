@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AddLink } from "@/components/addLink";
 import { linksQueryOptions } from "@/queries/linksQueryOptions";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -24,18 +24,16 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [searchTerm, setSearchTerm] = useState("");
-
-  const linksQuery = useQuery({ ...linksQueryOptions, refetchInterval: 2000 });
-  const links = linksQuery.data;
-
+  const linksQuery = useInfiniteQuery({ ...linksQueryOptions });
   if (linksQuery.isLoading) {
     return <div>Loading...</div>;
   }
+  const links = linksQuery.data?.pages.flatMap((page) => page.data);
 
   return (
-    <div className='flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)]'>
+    <div className='flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)] mb-10'>
       <main className='flex-1 p-4'>
-        <div className='flex space-x-2 mb-6'>
+        <div className='flex space-x-2'>
           <div className='relative flex-1'>
             <Search className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <Input
@@ -47,9 +45,22 @@ function Index() {
           </div>
           <AddLink />
         </div>
+        <div className='text-sm text-gray-500 my-4'>
+          {`Showing ${links?.length} out of ${linksQuery.data?.pages[0].total} bookmarks`}
+        </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto'>
           {links?.map((link) => <BookmarkCard key={link.id} bookmark={link} />)}
         </div>
+        {linksQuery.hasNextPage && (
+          <div className='flex justify-center mt-4'>
+            <Button
+              onClick={() => linksQuery.fetchNextPage()}
+              disabled={linksQuery.isFetchingNextPage}
+            >
+              {linksQuery.isFetchingNextPage ? "Loading..." : "Load more"}
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );

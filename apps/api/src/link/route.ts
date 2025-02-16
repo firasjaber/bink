@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import { sql, eq, and, desc, notInArray } from "drizzle-orm";
+import { sql, eq, and, desc, notInArray, count } from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
 import {
   insertLinkSchema,
@@ -29,51 +29,108 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           userId: await getUserIdFromSession(authorization ?? ""),
         };
       })
-      .get("", async ({ userId }) => {
-        const links = await drizzle
-          .select({
-            id: linkTable.id,
-            url: linkTable.url,
-            title: linkTable.title,
-            description: linkTable.description,
-            image: linkTable.image,
-            state: linkTable.state,
-            createdAt: linkTable.createdAt,
-            tags: sql<Array<{ name: string; color: string }>>`
-              array_agg(
-                CASE 
-                  WHEN ${linkTagTable.name} IS NOT NULL 
-                  THEN json_build_object(
-                    'name', ${linkTagTable.name},
-                    'color', ${linkTagTable.color}
-                  )
-                  ELSE NULL 
-                END
-              )`,
-          })
-          .from(linkTable)
-          .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
-          .leftJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
-          .where(sql`${linkTable.userId} = ${userId}`)
-          .groupBy(
-            linkTable.id,
-            linkTable.url,
-            linkTable.title,
-            linkTable.description,
-            linkTable.image,
-            linkTable.state,
-            linkTable.createdAt
-          )
-          .orderBy(desc(linkTable.createdAt));
+      .get(
+        "",
+        async ({ query, userId, set }) => {
+          if (userId === null) {
+            set.status = 401;
+            return {
+              error: "Unauthorized",
+            };
+          }
+          try {
+            const { cursor, limit = 12 } = query;
 
-        // Transform the response to handle null tags
-        const transformedLinks = links.map((link) => ({
-          ...link,
-          tags: link.tags?.[0] === null ? [] : link.tags ?? [],
-        }));
+            const total = await drizzle
+              .select({ count: count() })
+              .from(linkTable)
+              .where(eq(linkTable.userId, userId));
 
-        return { data: transformedLinks };
-      })
+            const links = await drizzle
+              .select({
+                id: linkTable.id,
+                url: linkTable.url,
+                title: linkTable.title,
+                description: linkTable.description,
+                image: linkTable.image,
+                state: linkTable.state,
+                createdAt: linkTable.createdAt,
+                tags: sql<Array<{ name: string; color: string }>>`
+                  array_agg(
+                    CASE 
+                      WHEN ${linkTagTable.name} IS NOT NULL 
+                      THEN json_build_object(
+                        'name', ${linkTagTable.name},
+                        'color', ${linkTagTable.color}
+                      )
+                      ELSE NULL 
+                    END
+                  )`,
+              })
+              .from(linkTable)
+              .leftJoin(
+                linkTagsToLinks,
+                eq(linkTable.id, linkTagsToLinks.linkId)
+              )
+              .leftJoin(
+                linkTagTable,
+                eq(linkTagsToLinks.tagId, linkTagTable.id)
+              )
+              .where(
+                and(
+                  eq(linkTable.userId, userId),
+                  cursor
+                    ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
+                    : undefined
+                )
+              )
+              .groupBy(
+                linkTable.id,
+                linkTable.url,
+                linkTable.title,
+                linkTable.description,
+                linkTable.image,
+                linkTable.state,
+                linkTable.createdAt
+              )
+              .orderBy(desc(linkTable.createdAt))
+              .limit(limit + 1);
+
+            // Transform the response to handle null tags
+            const transformedLinks = links.map((link) => ({
+              ...link,
+              tags: link.tags?.[0] === null ? [] : link.tags ?? [],
+            }));
+
+            // Check if there are more results
+            const hasMore = transformedLinks.length > limit;
+            const results = transformedLinks.slice(0, limit);
+
+            // Generate next cursor if there are more results
+            const nextCursor = hasMore
+              ? results[results.length - 1].createdAt.getTime().toString()
+              : null;
+
+            return {
+              data: results,
+              nextCursor,
+              total: total[0].count,
+            };
+          } catch (error) {
+            console.log(error);
+            set.status = 500;
+            return {
+              error: "Internal Server Error",
+            };
+          }
+        },
+        {
+          query: t.Object({
+            cursor: t.Optional(t.String()),
+            limit: t.Optional(t.Number()),
+          }),
+        }
+      )
       .get(
         "/:id",
         async ({ userId, params: { id }, error }) => {

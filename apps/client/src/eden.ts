@@ -51,13 +51,18 @@ export const createLink = async (data: { url: string }) => {
   }
 };
 
-export const getLinks = async () => {
-  const res = await client.links.get();
+export const getLinks = async (cursor: string | null) => {
+  const query: { cursor?: string } = {};
+  if (cursor) {
+    query.cursor = cursor;
+  }
+
+  const res = await client.links.get({ query });
 
   if (res.error) {
     throw new Error(res.error.value as string);
   }
-  return res.data?.data;
+  return res.data;
 };
 
 export const getLink = async (id: string) => {
