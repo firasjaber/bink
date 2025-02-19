@@ -10,6 +10,7 @@ import {
   varchar,
   integer,
   jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
@@ -68,26 +69,39 @@ export const LinkStateEnum = {
   FAILED: "failed",
 } as const;
 
-export const linkTable = pgTable("link", {
-  id: uuid("id")
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  url: text("url").notNull(),
-  title: text("title"),
-  description: text("description"),
-  image: text("image"),
-  state: linkStateEnum("state").notNull(),
-  notes: jsonb("notes"),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", {
-    withTimezone: true,
-    mode: "date",
+export const linkTable = pgTable(
+  "link",
+  {
+    id: uuid("id")
+      .default(sql`gen_random_uuid()`)
+      .primaryKey(),
+    url: text("url").notNull(),
+    title: text("title"),
+    description: text("description"),
+    image: text("image"),
+    state: linkStateEnum("state").notNull(),
+    notes: jsonb("notes"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "date",
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    searchIndex: index("search_index").using(
+      "gin",
+      sql`(
+          setweight(to_tsvector('english', ${table.title}), 'A') ||
+          setweight(to_tsvector('english', regexp_replace(regexp_replace(${table.url}, '^https?://(?:www\.)?([^/]+).*$', '\1'), '\.[^.]+$', '')), 'B') ||
+          setweight(to_tsvector('english', ${table.description}), 'C')
+      )`
+    ),
   })
-    .defaultNow()
-    .notNull(),
-});
+);
 
 // link table zod input type
 export const insertLinkSchema = createInsertSchema(linkTable);

@@ -51,10 +51,13 @@ export const createLink = async (data: { url: string }) => {
   }
 };
 
-export const getLinks = async (cursor: string | null) => {
-  const query: { cursor?: string } = {};
+export const getLinks = async (cursor: string | null, search?: string) => {
+  const query: { cursor?: string; search?: string } = {};
   if (cursor) {
     query.cursor = cursor;
+  }
+  if (search) {
+    query.search = search;
   }
 
   const res = await client.links.get({ query });

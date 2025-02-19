@@ -44,7 +44,18 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             const total = await drizzle
               .select({ count: count() })
               .from(linkTable)
-              .where(eq(linkTable.userId, userId));
+              .where(
+                and(
+                  eq(linkTable.userId, userId),
+                  query.search
+                    ? sql`(
+                          setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
+                          setweight(to_tsvector('english', ${linkTable.description}), 'B')
+                        )
+                        @@ to_tsquery('english', ${query.search})`
+                    : undefined
+                )
+              );
 
             const links = await drizzle
               .select({
@@ -79,6 +90,13 @@ export const links = new Elysia({ prefix: "/links" }).guard(
               .where(
                 and(
                   eq(linkTable.userId, userId),
+                  query.search
+                    ? sql`(
+                        setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
+                        setweight(to_tsvector('english', ${linkTable.description}), 'B')
+                      )
+                      @@ to_tsquery('english', ${query.search})`
+                    : undefined,
                   cursor
                     ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
                     : undefined
@@ -128,6 +146,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           query: t.Object({
             cursor: t.Optional(t.String()),
             limit: t.Optional(t.Number()),
+            search: t.Optional(t.String()),
           }),
         }
       )
