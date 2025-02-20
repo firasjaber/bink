@@ -4,9 +4,11 @@ import { Search, ExternalLink, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AddLink } from "@/components/addLink";
-import { linksQueryOptions } from "@/queries/linksQueryOptions";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
+import { getLinks } from "@/eden";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -24,10 +26,16 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [searchTerm, setSearchTerm] = useState("");
-  const linksQuery = useInfiniteQuery({ ...linksQueryOptions });
-  if (linksQuery.isLoading) {
-    return <div>Loading...</div>;
-  }
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const linksQuery = useInfiniteQuery({
+    queryKey: ["links", debouncedSearch],
+    queryFn: ({ pageParam }: { pageParam: string | null }) =>
+      getLinks(pageParam, debouncedSearch),
+    initialPageParam: null,
+    getNextPageParam: (lastPage, _) => lastPage.nextCursor,
+  });
+
   const links = linksQuery.data?.pages.flatMap((page) => page.data);
 
   return (
@@ -46,10 +54,18 @@ function Index() {
           <AddLink />
         </div>
         <div className='text-sm text-gray-500 my-4'>
-          {`Showing ${links?.length} out of ${linksQuery.data?.pages[0].total} bookmarks`}
+          {linksQuery.isLoading && "Loading..."}
+          {linksQuery.data &&
+            `Showing ${links?.length} out of ${linksQuery.data?.pages[0].total} bookmarks`}
         </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-auto'>
-          {links?.map((link) => <BookmarkCard key={link.id} bookmark={link} />)}
+          {linksQuery.isLoading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className='w-full h-40' />
+              ))
+            : links?.map((link) => (
+                <BookmarkCard key={link?.id} bookmark={link} />
+              ))}
         </div>
         {linksQuery.hasNextPage && (
           <div className='flex justify-center mt-4'>
