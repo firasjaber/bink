@@ -11,7 +11,7 @@ import {
   scrapingJobs,
   linkTagsToLinks,
 } from "db/src/schema";
-import { isURLReachable } from "./helper";
+import { isURLReachable, extractTextFromNotes } from "./helper";
 
 export const links = new Elysia({ prefix: "/links" }).guard(
   {
@@ -50,7 +50,8 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                   query.search
                     ? sql`(
                           setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
-                          setweight(to_tsvector('english', ${linkTable.description}), 'B')
+                          setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
+                          setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
                         )
                         @@ to_tsquery('english', ${query.search})`
                     : undefined
@@ -93,7 +94,8 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                   query.search
                     ? sql`(
                         setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
-                        setweight(to_tsvector('english', ${linkTable.description}), 'B')
+                        setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
+                        setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
                       )
                       @@ to_tsquery('english', ${query.search})`
                     : undefined,
@@ -266,6 +268,9 @@ export const links = new Elysia({ prefix: "/links" }).guard(
               image: body.image ?? undefined,
               url: body.url ?? undefined,
               notes: body.notes ?? undefined,
+              notesText: body.notes
+                ? extractTextFromNotes(JSON.parse(body.notes))
+                : undefined,
             })
             .where(eq(linkTable.id, id));
 
