@@ -81,6 +81,7 @@ export const linkTable = pgTable(
     image: text("image"),
     state: linkStateEnum("state").notNull(),
     notes: jsonb("notes"),
+    notesText: text("notes_text"),
     userId: uuid("user_id")
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
@@ -96,8 +97,8 @@ export const linkTable = pgTable(
       "gin",
       sql`(
           setweight(to_tsvector('english', ${table.title}), 'A') ||
-          setweight(to_tsvector('english', regexp_replace(regexp_replace(${table.url}, '^https?://(?:www\.)?([^/]+).*$', '\1'), '\.[^.]+$', '')), 'B') ||
-          setweight(to_tsvector('english', ${table.description}), 'C')
+          setweight(to_tsvector('english', ${table.description}), 'B') ||
+          setweight(to_tsvector('english', ${table.notesText}), 'C')
       )`
     ),
   })
