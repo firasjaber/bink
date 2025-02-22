@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, ExternalLink, Edit } from "lucide-react";
+import { Search, ExternalLink, Edit, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AddLink } from "@/components/addLink";
@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getLinks } from "@/eden";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -26,7 +34,16 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSmartSearch, setIsSmartSearch] = useState(false);
+  const [isSmartSearchLoading, setIsSmartSearchLoading] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const handleSmartSearchToggle = async () => {
+    setIsSmartSearchLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsSmartSearch(!isSmartSearch);
+    setIsSmartSearchLoading(false);
+  };
 
   const linksQuery = useInfiniteQuery({
     queryKey: ["links", debouncedSearch],
@@ -42,7 +59,7 @@ function Index() {
     <div className='flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)] mb-10'>
       <main className='flex-1 p-4'>
         <div className='flex space-x-2'>
-          <div className='relative flex-1'>
+          <div className='relative flex-1 flex items-center'>
             <Search className='absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400' />
             <Input
               className='pl-10'
@@ -50,6 +67,38 @@ function Index() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <div className='absolute right-2 flex items-center space-x-2'>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className='flex items-center space-x-2 cursor-pointer'>
+                      <div
+                        className={cn(
+                          " transition-colors duration-500 flex items-center space-x-2",
+                          isSmartSearch ? "text-purple-500" : "text-gray-400",
+                          isSmartSearchLoading && "animate-pulse"
+                        )}
+                      >
+                        <Sparkles className='w-4 h-4' />
+                        <span className='text-sm'>Smart Search</span>
+                      </div>
+                      <Switch
+                        checked={isSmartSearch}
+                        onCheckedChange={handleSmartSearchToggle}
+                        disabled={isSmartSearchLoading}
+                        className={`${isSmartSearchLoading ? "opacity-50 cursor-wait" : ""}`}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Smart search will use AI for context aware and similarity
+                      search capabilities
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           <AddLink />
         </div>
