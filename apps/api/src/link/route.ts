@@ -53,7 +53,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                           setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
                           setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
                         )
-                        @@ to_tsquery('english', ${query.search})`
+                        @@ websearch_to_tsquery('english', ${query.search})`
                     : undefined
                 )
               );
@@ -97,7 +97,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                         setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
                         setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
                       )
-                      @@ to_tsquery('english', ${query.search})`
+                      @@ phraseto_tsquery('english', ${query.search})`
                     : undefined,
                   cursor
                     ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
