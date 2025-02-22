@@ -11,3 +11,33 @@ export async function isURLReachable(urlString: string): Promise<boolean> {
     return false;
   }
 }
+
+interface TextNode {
+  type: string;
+  text?: string;
+  content?: TextNode[];
+  attrs?: {
+    level?: number;
+    [key: string]: unknown;
+  };
+}
+
+export function extractTextFromNotes(notes: TextNode | null): string {
+  if (!notes) return "";
+
+  const text: string[] = [];
+
+  // If the node has direct text, add it
+  if (notes.text) {
+    text.push(notes.text);
+  }
+
+  // Recursively process content array if it exists
+  if (notes.content && Array.isArray(notes.content)) {
+    for (const node of notes.content) {
+      text.push(extractTextFromNotes(node));
+    }
+  }
+
+  return text.join(" ").trim();
+}
