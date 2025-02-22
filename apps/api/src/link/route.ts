@@ -49,9 +49,9 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                   eq(linkTable.userId, userId),
                   query.search
                     ? sql`(
-                          setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
-                          setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
-                          setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
+                          setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
+                          setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
+                          setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
                         )
                         @@ websearch_to_tsquery('english', ${query.search})`
                     : undefined
@@ -93,11 +93,11 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                   eq(linkTable.userId, userId),
                   query.search
                     ? sql`(
-                        setweight(to_tsvector('english', ${linkTable.title}), 'A') ||
-                        setweight(to_tsvector('english', ${linkTable.description}), 'B') ||
-                        setweight(to_tsvector('english', ${linkTable.notesText}), 'C')
+                        setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
+                        setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
+                        setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
                       )
-                      @@ phraseto_tsquery('english', ${query.search})`
+                      @@ websearch_to_tsquery('english', ${query.search})`
                     : undefined,
                   cursor
                     ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
