@@ -1,9 +1,18 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import { sql, eq, and, desc, notInArray, count } from "drizzle-orm";
+import {
+  sql,
+  eq,
+  and,
+  desc,
+  notInArray,
+  count,
+  isNull,
+  cosineDistance,
+  gt,
+} from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
 import {
-  insertLinkSchema,
   insertScrapingJobSchema,
   LinkStateEnum,
   linkTable,
@@ -11,7 +20,12 @@ import {
   scrapingJobs,
   linkTagsToLinks,
 } from "db/src/schema";
-import { isURLReachable, extractTextFromNotes } from "./helper";
+import { insertLinkSchema } from "db/src/zod.schema";
+import {
+  isURLReachable,
+  extractTextFromNotes,
+  convertTextToEmbeddings,
+} from "./helper";
 
 export const links = new Elysia({ prefix: "/links" }).guard(
   {
@@ -40,34 +54,26 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }
           try {
             const { cursor, limit = 12 } = query;
-
-            const total = await drizzle
-              .select({ count: count() })
-              .from(linkTable)
-              .where(
-                and(
-                  eq(linkTable.userId, userId),
-                  query.search
-                    ? sql`(
-                          setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
-                        )
-                        @@ websearch_to_tsquery('english', ${query.search})`
-                    : undefined
-                )
-              );
-
-            const links = await drizzle
-              .select({
-                id: linkTable.id,
-                url: linkTable.url,
-                title: linkTable.title,
-                description: linkTable.description,
-                image: linkTable.image,
-                state: linkTable.state,
-                createdAt: linkTable.createdAt,
-                tags: sql<Array<{ name: string; color: string }>>`
+            let links = [];
+            let total: { count: number }[] = [{ count: 0 }];
+            if (query.smartSearch && query.search) {
+              const embedding = await convertTextToEmbeddings(query.search);
+              const similarity = sql<number>`1 - (${cosineDistance(linkTable.embedding, embedding)})`;
+              total = await drizzle
+                .select({ count: count() })
+                .from(linkTable)
+                .where(and(eq(linkTable.userId, userId), gt(similarity, 0.65)));
+              links = await drizzle
+                .select({
+                  id: linkTable.id,
+                  url: linkTable.url,
+                  title: linkTable.title,
+                  description: linkTable.description,
+                  image: linkTable.image,
+                  state: linkTable.state,
+                  createdAt: linkTable.createdAt,
+                  similarity: similarity,
+                  tags: sql<Array<{ name: string; color: string }>>`
                   array_agg(
                     CASE 
                       WHEN ${linkTagTable.name} IS NOT NULL 
@@ -78,43 +84,115 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                       ELSE NULL 
                     END
                   )`,
-              })
-              .from(linkTable)
-              .leftJoin(
-                linkTagsToLinks,
-                eq(linkTable.id, linkTagsToLinks.linkId)
-              )
-              .leftJoin(
-                linkTagTable,
-                eq(linkTagsToLinks.tagId, linkTagTable.id)
-              )
-              .where(
-                and(
-                  eq(linkTable.userId, userId),
-                  query.search
-                    ? sql`(
+                })
+                .from(linkTable)
+                .leftJoin(
+                  linkTagsToLinks,
+                  eq(linkTable.id, linkTagsToLinks.linkId)
+                )
+                .leftJoin(
+                  linkTagTable,
+                  eq(linkTagsToLinks.tagId, linkTagTable.id)
+                )
+                .where(
+                  and(
+                    eq(linkTable.userId, userId),
+                    query.search ? gt(similarity, 0.7) : undefined,
+                    cursor
+                      ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
+                      : undefined
+                  )
+                )
+                .groupBy(
+                  linkTable.id,
+                  linkTable.url,
+                  linkTable.title,
+                  linkTable.description,
+                  linkTable.image,
+                  linkTable.state,
+                  linkTable.createdAt
+                )
+                .orderBy((t) => desc(t.similarity))
+                .limit(limit + 1);
+              console.log(total);
+              const titles = links.map((link) => link.title);
+              console.log(titles);
+            } else {
+              total = await drizzle
+                .select({ count: count() })
+                .from(linkTable)
+                .where(
+                  and(
+                    eq(linkTable.userId, userId),
+                    query.search
+                      ? sql`(
+                          setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
+                          setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
+                          setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
+                        )
+                        @@ websearch_to_tsquery('english', ${query.search})`
+                      : undefined
+                  )
+                );
+
+              links = await drizzle
+                .select({
+                  id: linkTable.id,
+                  url: linkTable.url,
+                  title: linkTable.title,
+                  description: linkTable.description,
+                  image: linkTable.image,
+                  state: linkTable.state,
+                  createdAt: linkTable.createdAt,
+                  tags: sql<Array<{ name: string; color: string }>>`
+                  array_agg(
+                    CASE 
+                      WHEN ${linkTagTable.name} IS NOT NULL 
+                      THEN json_build_object(
+                        'name', ${linkTagTable.name},
+                        'color', ${linkTagTable.color}
+                      )
+                      ELSE NULL 
+                    END
+                  )`,
+                })
+                .from(linkTable)
+                .leftJoin(
+                  linkTagsToLinks,
+                  eq(linkTable.id, linkTagsToLinks.linkId)
+                )
+                .leftJoin(
+                  linkTagTable,
+                  eq(linkTagsToLinks.tagId, linkTagTable.id)
+                )
+                .where(
+                  and(
+                    eq(linkTable.userId, userId),
+                    query.search
+                      ? sql`(
                         setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
                         setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
                         setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
                       )
                       @@ websearch_to_tsquery('english', ${query.search})`
-                    : undefined,
-                  cursor
-                    ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
-                    : undefined
+                      : undefined,
+                    cursor
+                      ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
+                      : undefined
+                  )
                 )
-              )
-              .groupBy(
-                linkTable.id,
-                linkTable.url,
-                linkTable.title,
-                linkTable.description,
-                linkTable.image,
-                linkTable.state,
-                linkTable.createdAt
-              )
-              .orderBy(desc(linkTable.createdAt))
-              .limit(limit + 1);
+                .groupBy(
+                  linkTable.id,
+                  linkTable.url,
+                  linkTable.title,
+                  linkTable.description,
+                  linkTable.image,
+                  linkTable.state,
+                  linkTable.createdAt
+                )
+                .orderBy(desc(linkTable.createdAt))
+                .limit(limit + 1);
+            }
 
             // Transform the response to handle null tags
             const transformedLinks = links.map((link) => ({
@@ -149,6 +227,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             cursor: t.Optional(t.String()),
             limit: t.Optional(t.Number()),
             search: t.Optional(t.String()),
+            smartSearch: t.Optional(t.Boolean()),
           }),
         }
       )
@@ -289,7 +368,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
-      .get("/:id/tags", async ({ userId, params: { id }, error }) => {
+      .get("/:id/tags", async ({ params: { id } }) => {
         const linkTags = await drizzle
           .select({
             id: linkTagTable.id,
@@ -391,4 +470,32 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
+      .put("/embeddings", async ({ userId, set }) => {
+        try {
+          // Get all the users links with the embeddings not set
+          const links = await drizzle
+            .select()
+            .from(linkTable)
+            .where(
+              and(
+                eq(linkTable.userId, userId as string),
+                isNull(linkTable.embedding)
+              )
+            );
+          for (const link of links) {
+            const embeddings = await convertTextToEmbeddings(
+              link.title + " " + link.description + " " + link.notesText
+            );
+            await drizzle
+              .update(linkTable)
+              .set({ embedding: embeddings })
+              .where(eq(linkTable.id, link.id));
+          }
+          return { status: "success", message: "Embeddings updated" };
+        } catch (error) {
+          console.log(error);
+          set.status = 500;
+          return { status: "error", message: "Failed to update embeddings" };
+        }
+      })
 );
