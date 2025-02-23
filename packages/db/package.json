@@ -6,7 +6,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "push": "drizzle-kit push"
+    "push": "drizzle-kit push",
+    "seed": "bun run scripts/seed.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
