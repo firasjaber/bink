@@ -4,10 +4,10 @@ import { Search, ExternalLink, Edit, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AddLink } from "@/components/addLink";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
-import { getLinks } from "@/eden";
+import { getLinks, updateLinkEmbeddings } from "@/eden";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -35,20 +35,27 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSmartSearch, setIsSmartSearch] = useState(false);
-  const [isSmartSearchLoading, setIsSmartSearchLoading] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
 
+  const {
+    mutateAsync: updateLinkEmbeddingsMutation,
+    isPending: isUpdatingEmbeddings,
+  } = useMutation({
+    mutationFn: () => updateLinkEmbeddings(),
+  });
+
   const handleSmartSearchToggle = async () => {
-    setIsSmartSearchLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (!isSmartSearch) {
+      await updateLinkEmbeddingsMutation();
+    }
     setIsSmartSearch(!isSmartSearch);
-    setIsSmartSearchLoading(false);
+    setSearchTerm("");
   };
 
   const linksQuery = useInfiniteQuery({
     queryKey: ["links", debouncedSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      getLinks(pageParam, debouncedSearch),
+      getLinks(pageParam, debouncedSearch, isSmartSearch),
     initialPageParam: null,
     getNextPageParam: (lastPage, _) => lastPage.nextCursor,
   });
@@ -76,7 +83,7 @@ function Index() {
                         className={cn(
                           " transition-colors duration-500 flex items-center space-x-2",
                           isSmartSearch ? "text-purple-500" : "text-gray-400",
-                          isSmartSearchLoading && "animate-pulse"
+                          isUpdatingEmbeddings && "animate-pulse"
                         )}
                       >
                         <Sparkles className='w-4 h-4' />
@@ -85,8 +92,8 @@ function Index() {
                       <Switch
                         checked={isSmartSearch}
                         onCheckedChange={handleSmartSearchToggle}
-                        disabled={isSmartSearchLoading}
-                        className={`${isSmartSearchLoading ? "opacity-50 cursor-wait" : ""}`}
+                        disabled={isUpdatingEmbeddings}
+                        className={`${isUpdatingEmbeddings ? "opacity-50 cursor-wait" : ""}`}
                       />
                     </div>
                   </TooltipTrigger>

@@ -51,13 +51,20 @@ export const createLink = async (data: { url: string }) => {
   }
 };
 
-export const getLinks = async (cursor: string | null, search?: string) => {
-  const query: { cursor?: string; search?: string } = {};
+export const getLinks = async (
+  cursor: string | null,
+  search?: string,
+  smartSearch?: boolean
+) => {
+  const query: { cursor?: string; search?: string; smartSearch?: boolean } = {};
   if (cursor) {
     query.cursor = cursor;
   }
   if (search) {
     query.search = search;
+  }
+  if (smartSearch) {
+    query.smartSearch = smartSearch;
   }
 
   const res = await client.links.get({ query });
@@ -122,4 +129,12 @@ export const updateLinkTags = async (
     throw new Error(res.error.value as string);
   }
   return res.data;
+};
+
+export const updateLinkEmbeddings = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  const res = await client.links.embeddings.put();
+  if (res.error) {
+    throw new Error(res.error.value as string);
+  }
 };
