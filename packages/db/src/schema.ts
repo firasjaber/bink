@@ -11,6 +11,7 @@ import {
   integer,
   jsonb,
   index,
+  vector,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
@@ -82,6 +83,7 @@ export const linkTable = pgTable(
     state: linkStateEnum("state").notNull(),
     notes: jsonb("notes"),
     notesText: text("notes_text"),
+    embedding: vector("embedding", { dimensions: 768 }),
     userId: uuid("user_id")
       .notNull()
       .references(() => userTable.id, { onDelete: "cascade" }),
@@ -101,11 +103,12 @@ export const linkTable = pgTable(
           setweight(to_tsvector('english', ${table.notesText}), 'C')
       )`
     ),
+    embeddingIndex: index("embeddingIndex").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops")
+    ),
   })
 );
-
-// link table zod input type
-export const insertLinkSchema = createInsertSchema(linkTable);
 
 export const linkTagsToLinks = pgTable(
   "link_tags_to_links",
