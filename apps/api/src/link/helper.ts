@@ -41,3 +41,15 @@ export function extractTextFromNotes(notes: TextNode | null): string {
 
   return text.join(" ").trim();
 }
+
+export async function convertTextToEmbeddings(text: string) {
+  const req = await fetch("http://localhost:11434/api/embeddings", {
+    method: "POST",
+    body: JSON.stringify({
+      model: "jina/jina-embeddings-v2-base-en",
+      prompt: text,
+    }),
+  });
+  const responseData = await req.json();
+  return responseData.embedding;
+}

@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { extractTextFromNotes, isURLReachable } from "./helper";
+import {
+  convertTextToEmbeddings,
+  extractTextFromNotes,
+  isURLReachable,
+} from "./helper";
 
 describe("isURLReachable", () => {
   test("should return false if url is not reachable", async () => {
@@ -50,5 +54,14 @@ describe("extractTextFromNotes", () => {
     expect(extractTextFromNotes(notes)).toBe(
       "Nested paragraph Nested text Hello, world!"
     );
+  });
+});
+
+describe("convertTextToEmbeddings", () => {
+  test("should return embeddings if text is provided", async () => {
+    const text = "Hello, world!";
+    const embeddings = await convertTextToEmbeddings(text);
+    expect(embeddings).toBeDefined();
+    expect(embeddings).toBeArray();
   });
 });
