@@ -53,7 +53,9 @@ CREATE TABLE "user" (
 	"first_name" varchar NOT NULL,
 	"last_name" varchar NOT NULL,
 	"email" varchar NOT NULL,
-	"password" text NOT NULL,
+	"password" text,
+	"google_id" varchar,
+	"profile_picture" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
