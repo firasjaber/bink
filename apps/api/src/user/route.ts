@@ -1,15 +1,15 @@
-import Elysia, { error, t, ValidationError } from 'elysia';
-import { lucia } from '../lucia';
-import { userTable } from 'db';
-import { drizzle } from '..';
-import { sql } from 'drizzle-orm';
-import argon from 'argon2';
-import { getUserIdFromSession, validateSession } from '../auth';
+import Elysia, { error, t, ValidationError } from "elysia";
+import { lucia } from "../lucia";
+import { userTable } from "db";
+import { drizzle } from "..";
+import { sql } from "drizzle-orm";
+import argon from "argon2";
+import { getUserIdFromSession, validateSession } from "../auth";
 
-export const users = new Elysia({ prefix: '/users' })
+export const users = new Elysia({ prefix: "/users" })
   .post(
-    '/login',
-    async ({ body, error }) => {
+    "/login",
+    async ({ body, error, set }) => {
       const users = await drizzle
         .select()
         .from(userTable)
@@ -17,13 +17,19 @@ export const users = new Elysia({ prefix: '/users' })
         .limit(1);
 
       if (users.length === 0) {
-        throw error('Unauthorized', 'Invalid credentials');
+        throw error("Unauthorized", "Invalid credentials");
       }
 
       const user = users[0];
+
+      if (user.password === null || user.googleId) {
+        set.status = 401;
+        return { message: "Google user, use Google login" };
+      }
+
       const isValidPassword = await argon.verify(user.password, body.password);
       if (!isValidPassword) {
-        throw error('Unauthorized', 'Invalid credentials');
+        throw error("Unauthorized", "Invalid credentials");
       }
 
       const session = await lucia.createSession(user.id, {});
@@ -31,13 +37,13 @@ export const users = new Elysia({ prefix: '/users' })
     },
     {
       body: t.Object({
-        email: t.String({ format: 'email' }),
+        email: t.String({ format: "email" }),
         password: t.String({ minLength: 8 }),
       }),
-    },
+    }
   )
   .post(
-    '/register',
+    "/register",
     async ({ body, error }) => {
       // check if a user with the same email already exists
       const existingUser = await drizzle
@@ -46,7 +52,7 @@ export const users = new Elysia({ prefix: '/users' })
         .where(sql`email = ${body.email}`)
         .limit(1);
       if (existingUser.length) {
-        throw error('Bad Request', 'User with this email already exists');
+        throw error("Bad Request", "User with this email already exists");
       }
 
       const hashedPassword = await argon.hash(body.password);
@@ -61,7 +67,7 @@ export const users = new Elysia({ prefix: '/users' })
         .returning();
 
       if (users.length === 0) {
-        throw error('Internal Server Error', 'Failed to create user');
+        throw error("Internal Server Error", "Failed to create user");
       }
 
       const session = await lucia.createSession(users[0].id, {});
@@ -70,19 +76,19 @@ export const users = new Elysia({ prefix: '/users' })
     },
     {
       body: t.Object({
-        email: t.String({ format: 'email' }),
+        email: t.String({ format: "email" }),
         password: t.String({ minLength: 8 }),
         firstName: t.String({ minLength: 2 }),
         lastName: t.String({ minLength: 2 }),
       }),
-    },
+    }
   )
   .guard(
     {
       async beforeHandle({ headers: { authorization }, error }) {
-        const isValidSession = await validateSession(authorization ?? '');
+        const isValidSession = await validateSession(authorization ?? "");
         if (!authorization || !isValidSession) {
-          throw error('Unauthorized', 'Invalid session');
+          throw error("Unauthorized", "Invalid session");
         }
       },
     },
@@ -90,32 +96,38 @@ export const users = new Elysia({ prefix: '/users' })
       app
         .resolve(async ({ headers: { authorization } }) => {
           return {
-            userId: await getUserIdFromSession(authorization ?? ''),
+            userId: await getUserIdFromSession(authorization ?? ""),
           };
         })
-        .post('/logout', async ({ headers: { authorization } }) => {
-          const sessionId = lucia.readBearerToken(authorization ?? '');
+        .post("/logout", async ({ headers: { authorization } }) => {
+          const sessionId = lucia.readBearerToken(authorization ?? "");
           if (!sessionId) {
-            throw error('Unauthorized', 'Invalid session');
+            throw error("Unauthorized", "Invalid session");
           }
-          return { message: 'Logged out' };
+          return { message: "Logged out" };
         })
-        .get('/loggedin', async ({ userId, error, headers: { authorization } }) => {
-          const users = await drizzle
-            .select({
-              id: userTable.id,
-              firstName: userTable.firstName,
-              lastName: userTable.lastName,
-              email: userTable.email,
-              createdAt: userTable.createdAt,
-            })
-            .from(userTable)
-            .where(sql`id = ${userId}`)
-            .limit(1);
-          if (users.length === 0) {
-            await lucia.invalidateSession(authorization ?? '').catch(() => false);
-            throw error('Internal Server Error', 'User not found');
+        .get(
+          "/loggedin",
+          async ({ userId, error, headers: { authorization } }) => {
+            const users = await drizzle
+              .select({
+                id: userTable.id,
+                firstName: userTable.firstName,
+                lastName: userTable.lastName,
+                email: userTable.email,
+                createdAt: userTable.createdAt,
+                profilePicture: userTable.profilePicture,
+              })
+              .from(userTable)
+              .where(sql`id = ${userId}`)
+              .limit(1);
+            if (users.length === 0) {
+              await lucia
+                .invalidateSession(authorization ?? "")
+                .catch(() => false);
+              throw error("Internal Server Error", "User not found");
+            }
+            return { data: users[0] };
           }
-          return { data: users[0] };
-        }),
+        )
   );
