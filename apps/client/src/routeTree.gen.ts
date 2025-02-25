@@ -11,20 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AuthImport } from './routes/auth'
 import { Route as IndexImport } from './routes/index'
+import { Route as AuthIndexImport } from './routes/auth/index'
 import { Route as ProfileIdImport } from './routes/profile.$id'
 import { Route as LinkIdImport } from './routes/link.$id'
+import { Route as AuthCallbackImport } from './routes/auth/callback'
 
 // Create/Update Routes
 
-const AuthRoute = AuthImport.update({
-  path: '/auth',
+const IndexRoute = IndexImport.update({
+  path: '/',
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
-  path: '/',
+const AuthIndexRoute = AuthIndexImport.update({
+  path: '/auth/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -35,6 +36,11 @@ const ProfileIdRoute = ProfileIdImport.update({
 
 const LinkIdRoute = LinkIdImport.update({
   path: '/link/$id',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthCallbackRoute = AuthCallbackImport.update({
+  path: '/auth/callback',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -49,11 +55,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthImport
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackImport
       parentRoute: typeof rootRoute
     }
     '/link/$id': {
@@ -70,6 +76,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIdImport
       parentRoute: typeof rootRoute
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthIndexImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -77,9 +90,10 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren({
   IndexRoute,
-  AuthRoute,
+  AuthCallbackRoute,
   LinkIdRoute,
   ProfileIdRoute,
+  AuthIndexRoute,
 })
 
 /* prettier-ignore-end */
@@ -91,22 +105,26 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/auth",
+        "/auth/callback",
         "/link/$id",
-        "/profile/$id"
+        "/profile/$id",
+        "/auth/"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/auth": {
-      "filePath": "auth.tsx"
+    "/auth/callback": {
+      "filePath": "auth/callback.tsx"
     },
     "/link/$id": {
       "filePath": "link.$id.tsx"
     },
     "/profile/$id": {
       "filePath": "profile.$id.tsx"
+    },
+    "/auth/": {
+      "filePath": "auth/index.tsx"
     }
   }
 }
