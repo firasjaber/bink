@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getLoggedInUser, logout } from '@/eden';
+import { create } from "zustand";
+import { getLoggedInUser, logout } from "@/eden";
 
 export interface AuthState {
   isAuth: boolean;
@@ -9,6 +9,7 @@ export interface AuthState {
     lastName: string;
     email: string;
     createdAt: Date;
+    profilePicture: string | null;
   } | null;
   sessionId: string | null;
   isLoading: boolean;
@@ -29,7 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: async (sessionId: string) => {
     try {
       const user = await getLoggedInUser();
-      localStorage.setItem('sessionId', sessionId);
+      localStorage.setItem("sessionId", sessionId);
       set({ user, sessionId, isAuth: true, isLoading: false });
     } catch (_) {
       localStorage.removeItem("sessionId");
@@ -51,7 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   logout: () => {
-    const sessionId = localStorage.getItem('sessionId');
+    const sessionId = localStorage.getItem("sessionId");
     if (sessionId) {
       logout();
       localStorage.removeItem("sessionId");
