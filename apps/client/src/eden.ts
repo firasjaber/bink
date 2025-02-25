@@ -36,8 +36,13 @@ export const signUp = async (data: {
 };
 
 export const getLoggedInUser = async () => {
-  const res = await client.users.loggedin.get();
-  return res.data?.data;
+  try {
+    const res = await client.users.loggedin.get();
+    return res.data?.data;
+  } catch (_) {
+    localStorage.removeItem("sessionId");
+    return null;
+  }
 };
 
 export const logout = async () => {
@@ -137,4 +142,21 @@ export const updateLinkEmbeddings = async () => {
   if (res.error) {
     throw new Error(res.error.value as string);
   }
+};
+
+export const getGoogleAuthUrl = async () => {
+  const response = await client.auth.google.get();
+  if (response.error) {
+    throw new Error(response.error.value as string);
+  }
+  return response.data.url;
+};
+
+export const googleAuthCallback = async (code: string) => {
+  const response = await client.auth.google.callback.get({ query: { code } });
+  if (response.error) {
+    throw new Error(response.error.value as string);
+  }
+
+  return response.data;
 };
