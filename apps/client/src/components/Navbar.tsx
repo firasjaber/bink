@@ -22,10 +22,13 @@ function UserAvatar() {
       <Link to='/profile/$id' params={{ id: user.id }}>
         <Avatar>
           <AvatarImage
-            src='https://i.pinimg.com/736x/9d/4a/49/9d4a49b2b2b9392d3f844c4dbcff52d6.jpg'
-            alt='@shadcn'
+            src={
+              user.profilePicture ??
+              "https://i.pinimg.com/736x/9d/4a/49/9d4a49b2b2b9392d3f844c4dbcff52d6.jpg"
+            }
+            alt={user.firstName}
           />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarFallback>{user.firstName.charAt(0)}</AvatarFallback>
         </Avatar>
       </Link>
     );

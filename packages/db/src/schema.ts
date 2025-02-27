@@ -23,7 +23,9 @@ export const userTable = pgTable("user", {
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   email: varchar("email").notNull(),
-  password: text("password").notNull(),
+  password: text("password"),
+  googleId: varchar("google_id"),
+  profilePicture: text("profile_picture"),
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "date",
