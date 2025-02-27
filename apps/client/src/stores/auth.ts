@@ -11,9 +11,8 @@ export interface AuthState {
     createdAt: Date;
     profilePicture: string | null;
   } | null;
-  sessionId: string | null;
   isLoading: boolean;
-  setUser: (sessionId: string) => Promise<void>;
+  setUser: () => Promise<void>;
   initAuth: () => Promise<void>;
   logout: () => void;
 }
@@ -21,44 +20,31 @@ export interface AuthState {
 const initialState = {
   isAuth: false,
   user: null,
-  sessionId: null,
   isLoading: true,
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   ...initialState,
-  setUser: async (sessionId: string) => {
+  setUser: async () => {
     try {
       const user = await getLoggedInUser();
       if (!user) throw new Error("Session expired");
-      localStorage.setItem("sessionId", sessionId);
-      set({ user, sessionId, isAuth: true, isLoading: false });
+      set({ user, isAuth: true, isLoading: false });
     } catch (_) {
-      localStorage.removeItem("sessionId");
       set({ ...initialState, isLoading: false });
     }
   },
   initAuth: async () => {
-    const sessionId = localStorage.getItem("sessionId");
-    if (sessionId) {
-      try {
-        const user = await getLoggedInUser();
-        if (!user) throw new Error("Session expired");
-        set({ user, sessionId, isAuth: true, isLoading: false });
-      } catch (_error) {
-        localStorage.removeItem("sessionId");
-        set({ ...initialState, isLoading: false });
-      }
-    } else {
+    try {
+      const user = await getLoggedInUser();
+      if (!user) throw new Error("Session expired");
+      set({ user, isAuth: true, isLoading: false });
+    } catch (_error) {
       set({ ...initialState, isLoading: false });
     }
   },
-  logout: () => {
-    const sessionId = localStorage.getItem("sessionId");
-    if (sessionId) {
-      logout();
-      localStorage.removeItem("sessionId");
-    }
+  logout: async () => {
+    await logout();
     set({ ...initialState, isLoading: false });
   },
 }));
