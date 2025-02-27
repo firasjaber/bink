@@ -30,11 +30,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: async (sessionId: string) => {
     try {
       const user = await getLoggedInUser();
+      if (!user) throw new Error("Session expired");
       localStorage.setItem("sessionId", sessionId);
       set({ user, sessionId, isAuth: true, isLoading: false });
     } catch (_) {
       localStorage.removeItem("sessionId");
-      set(initialState);
+      set({ ...initialState, isLoading: false });
     }
   },
   initAuth: async () => {
@@ -42,6 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (sessionId) {
       try {
         const user = await getLoggedInUser();
+        if (!user) throw new Error("Session expired");
         set({ user, sessionId, isAuth: true, isLoading: false });
       } catch (_error) {
         localStorage.removeItem("sessionId");

@@ -136,7 +136,7 @@ function SignInTab() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder='' {...field} />
+                  <Input type='password' placeholder='' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -287,11 +287,11 @@ function SignUpTab() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder='' {...field} />
+                  <Input type='password' placeholder='' {...field} />
                 </FormControl>
                 {!fieldState.error && (
                   <FormDescription>
-                    Password must be at least 8 characters
+                    Password must be at least 8 characters.
                   </FormDescription>
                 )}
                 <FormMessage />
