@@ -4,6 +4,7 @@ import "../App.css";
 import { type AuthState, useAuthStore } from "@/stores/auth";
 import { Navbar } from "@/components/Navbar";
 import { useEffect } from "react";
+import { FullScreenLoading } from "@/components/ui/full-screen-loading";
 
 export interface RouterContext {
   auth: AuthState;
@@ -18,7 +19,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     }, [initAuth]);
 
     if (isLoading) {
-      return <div>Loading...</div>;
+      return <FullScreenLoading />;
     }
 
     return (
