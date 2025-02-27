@@ -14,7 +14,6 @@ export const Route = createFileRoute("/auth/callback")({
         throw new Error(response.error.value as string);
       }
 
-      localStorage.setItem("sessionId", response.sessionId);
       throw redirect({ to: "/" });
     } catch (error) {
       console.error("Google callback error:", error);

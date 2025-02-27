@@ -3,14 +3,9 @@ import { treaty } from "@elysiajs/eden";
 import type { App } from "../../api/src";
 
 const client = treaty<App>("localhost:3000", {
-  onRequest: () => {
-    const sessionId = localStorage.getItem("sessionId");
-    if (sessionId) {
-      return {
-        headers: { authorization: `Bearer ${sessionId}` },
-      };
-    }
-    return {};
+  fetch: {
+    credentials: "include",
+    mode: "cors",
   },
 });
 
@@ -90,7 +85,6 @@ export const getLink = async (id: string) => {
 
 export const getLinkTags = async (id: string) => {
   const res = await client.links({ id }).tags.get();
-  console.log(res);
   if (res.error) {
     throw new Error(res.error.value as string);
   }

@@ -29,18 +29,18 @@ import {
 
 export const links = new Elysia({ prefix: "/links" }).guard(
   {
-    async beforeHandle({ headers: { authorization }, error }) {
-      const isValidSession = await validateSession(authorization ?? "");
-      if (!authorization || !isValidSession) {
+    async beforeHandle({ headers, error }) {
+      const isValidSession = await validateSession(headers.cookie ?? "");
+      if (!isValidSession) {
         throw error("Unauthorized", "Invalid session");
       }
     },
   },
   (app) =>
     app
-      .resolve(async ({ headers: { authorization } }) => {
+      .resolve(async ({ headers }) => {
         return {
-          userId: await getUserIdFromSession(authorization ?? ""),
+          userId: await getUserIdFromSession(headers.cookie ?? ""),
         };
       })
       .get(
@@ -114,9 +114,6 @@ export const links = new Elysia({ prefix: "/links" }).guard(
                 )
                 .orderBy((t) => desc(t.similarity))
                 .limit(limit + 1);
-              console.log(total);
-              const titles = links.map((link) => link.title);
-              console.log(titles);
             } else {
               total = await drizzle
                 .select({ count: count() })

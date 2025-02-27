@@ -1,27 +1,24 @@
-import { lucia } from './lucia';
+import { lucia } from "./lucia";
 
-export const validateSession = async (bearer: string) => {
-  const sessionId = lucia.readBearerToken(bearer);
+export const validateSession = async (cookie: string) => {
+  const sessionId = lucia.readSessionCookie(cookie);
   if (!sessionId) {
     return false;
   }
 
   const { session, user } = await lucia.validateSession(sessionId);
-
-  try {
-    if (!user || !session) {
-      await lucia.invalidateSession(sessionId).catch(() => false);
-      return false;
+  if (!session || !user) {
+    if (session) {
+      await lucia.invalidateSession(sessionId);
     }
-    return true;
-  } catch {
-    await lucia.invalidateSession(sessionId).catch(() => false);
     return false;
   }
+
+  return true;
 };
 
-export const getUserIdFromSession = async (bearer: string) => {
-  const sessionId = lucia.readBearerToken(bearer);
+export const getUserIdFromSession = async (cookie: string) => {
+  const sessionId = lucia.readSessionCookie(cookie);
   if (!sessionId) {
     return null;
   }
@@ -29,7 +26,7 @@ export const getUserIdFromSession = async (bearer: string) => {
   const { user } = await lucia.validateSession(sessionId);
 
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
   return user.id;
 };
