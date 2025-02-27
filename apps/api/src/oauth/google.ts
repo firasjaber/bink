@@ -10,10 +10,6 @@ export const oauth2Client = new OAuth2Client(
   REDIRECT_URI
 );
 
-console.log("GOOGLE_CLIENT_ID", GOOGLE_CLIENT_ID);
-console.log("GOOGLE_CLIENT_SECRET", GOOGLE_CLIENT_SECRET);
-console.log("REDIRECT_URI", REDIRECT_URI);
-
 export function generateGoogleAuthUrl() {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",

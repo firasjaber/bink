@@ -18,10 +18,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
     }
 
     try {
-      // Exchange code for tokens
-      console.log("code", code);
       const { tokens } = await oauth2Client.getToken(code);
-      console.log(tokens);
       oauth2Client.setCredentials(tokens);
 
       // Get user info
@@ -72,9 +69,10 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
 
       // Create session
       const session = await lucia.createSession(userId, {});
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      set.headers["Set-Cookie"] = sessionCookie.serialize();
 
       return {
-        sessionId: session.id,
         email,
       };
     } catch (error) {
