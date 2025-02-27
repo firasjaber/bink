@@ -9,7 +9,14 @@ export const drizzle = await initDrizzle();
 console.log("🐘 Database connected");
 
 const app = new Elysia()
-  .use(cors())
+  .use(
+    cors({
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["content-type", "cookie"],
+    })
+  )
   .use(users)
   .use(links)
   .use(googleAuth)
