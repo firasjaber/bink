@@ -17,12 +17,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { FullScreenLoading } from "@/components/ui/full-screen-loading";
 
 export const Route = createFileRoute("/")({
   component: Index,
   beforeLoad: ({ context }) => {
     if (context.auth.isLoading) {
-      return <div>Loading...</div>;
+      return <FullScreenLoading />;
     }
     if (!context.auth.isLoading && !context.auth.isAuth) {
       throw redirect({
