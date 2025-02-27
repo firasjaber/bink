@@ -21,12 +21,13 @@ import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { signIn, signUp, getGoogleAuthUrl } from "@/eden";
 import { useAuthStore } from "@/stores/auth";
+import { FullScreenLoading } from "@/components/ui/full-screen-loading";
 
 export const Route = createFileRoute("/auth/")({
   component: Auth,
   beforeLoad: ({ context }) => {
     if (context.auth.isLoading) {
-      return <div>Loading...</div>;
+      return <FullScreenLoading />;
     }
     if (!context.auth.isLoading && context.auth.isAuth) {
       throw redirect({
@@ -99,7 +100,7 @@ function SignInTab() {
     try {
       const url = await getGoogleAuthUrl();
       window.location.href = url;
-    } catch (error) {
+    } catch (_) {
       toast.error("Failed to initialize Google sign in");
     }
   };
