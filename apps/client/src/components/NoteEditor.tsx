@@ -10,7 +10,6 @@ const NoteEditor = () => {
         initialContent={content}
         onUpdate={({ editor }) => {
           const json = editor.getJSON();
-          console.log(json);
           setContent(json);
         }}
       />
