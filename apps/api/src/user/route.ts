@@ -33,7 +33,10 @@ export const users = new Elysia({ prefix: "/users" })
       }
 
       const session = await lucia.createSession(user.id, {});
-      return { data: { email: user.email, sessionId: session.id } };
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      set.headers["Set-Cookie"] = sessionCookie.serialize();
+
+      return { data: { email: user.email } };
     },
     {
       body: t.Object({
@@ -44,7 +47,7 @@ export const users = new Elysia({ prefix: "/users" })
   )
   .post(
     "/register",
-    async ({ body, error }) => {
+    async ({ body, error, set }) => {
       // check if a user with the same email already exists
       const existingUser = await drizzle
         .select()
@@ -71,8 +74,10 @@ export const users = new Elysia({ prefix: "/users" })
       }
 
       const session = await lucia.createSession(users[0].id, {});
+      const sessionCookie = lucia.createSessionCookie(session.id);
+      set.headers["Set-Cookie"] = sessionCookie.serialize();
 
-      return { data: { email: body.email, sessionId: session.id } };
+      return { data: { email: body.email } };
     },
     {
       body: t.Object({
@@ -85,49 +90,51 @@ export const users = new Elysia({ prefix: "/users" })
   )
   .guard(
     {
-      async beforeHandle({ headers: { authorization }, error }) {
-        const isValidSession = await validateSession(authorization ?? "");
-        if (!authorization || !isValidSession) {
+      async beforeHandle({ headers, error }) {
+        const isValidSession = await validateSession(headers.cookie ?? "");
+        if (!isValidSession) {
           throw error("Unauthorized", "Invalid session");
         }
       },
     },
     (app) =>
       app
-        .resolve(async ({ headers: { authorization } }) => {
+        .resolve(async ({ headers }) => {
           return {
-            userId: await getUserIdFromSession(authorization ?? ""),
+            userId: await getUserIdFromSession(headers.cookie ?? ""),
           };
         })
-        .post("/logout", async ({ headers: { authorization } }) => {
-          const sessionId = lucia.readBearerToken(authorization ?? "");
+        .post("/logout", async ({ headers, set }) => {
+          const sessionId = lucia.readSessionCookie(headers.cookie ?? "");
           if (!sessionId) {
             throw error("Unauthorized", "Invalid session");
           }
+          await lucia.invalidateSession(sessionId);
+          const sessionCookie = lucia.createBlankSessionCookie();
+          set.headers["Set-Cookie"] = sessionCookie.serialize();
+
           return { message: "Logged out" };
         })
-        .get(
-          "/loggedin",
-          async ({ userId, error, headers: { authorization } }) => {
-            const users = await drizzle
-              .select({
-                id: userTable.id,
-                firstName: userTable.firstName,
-                lastName: userTable.lastName,
-                email: userTable.email,
-                createdAt: userTable.createdAt,
-                profilePicture: userTable.profilePicture,
-              })
-              .from(userTable)
-              .where(sql`id = ${userId}`)
-              .limit(1);
-            if (users.length === 0) {
-              await lucia
-                .invalidateSession(authorization ?? "")
-                .catch(() => false);
-              throw error("Internal Server Error", "User not found");
+        .get("/loggedin", async ({ userId, error, headers }) => {
+          const users = await drizzle
+            .select({
+              id: userTable.id,
+              firstName: userTable.firstName,
+              lastName: userTable.lastName,
+              email: userTable.email,
+              createdAt: userTable.createdAt,
+              profilePicture: userTable.profilePicture,
+            })
+            .from(userTable)
+            .where(sql`id = ${userId}`)
+            .limit(1);
+          if (users.length === 0) {
+            const sessionId = lucia.readSessionCookie(headers.cookie ?? "");
+            if (sessionId) {
+              await lucia.invalidateSession(sessionId).catch(() => false);
             }
-            return { data: users[0] };
+            throw error("Internal Server Error", "User not found");
           }
-        )
+          return { data: users[0] };
+        })
   );
