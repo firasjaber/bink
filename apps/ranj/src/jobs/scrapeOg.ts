@@ -4,10 +4,11 @@ import ogs from "open-graph-scraper";
 import { LinkDataSchema } from "../types";
 import { db } from "..";
 import * as queries from "db/src/queries";
+import { logger } from "../logger";
 
 export const scrapeOgHandler: JobHandler<LinkData> = {
   async execute(job: ScrapingJob): Promise<JobResult<LinkData>> {
-    console.log(`Scraping OG data for URL: ${job.url}`);
+    logger.info(`Scraping OG data for URL: ${job.url}`);
 
     const data = await parseLinkData(job.url);
 

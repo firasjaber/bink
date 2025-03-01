@@ -2,6 +2,7 @@ import { type ScrapingJob } from "db/src/schema";
 import { db } from "./index";
 import { getJobHandler } from "./registry";
 import * as queries from "db/src/queries";
+import { logger } from "./logger";
 
 const BATCH_SIZE = 10;
 
@@ -35,7 +36,7 @@ async function executeJob(job: ScrapingJob): Promise<void> {
 
   try {
     const result = await handler.execute(job);
-    console.log(`Job ${job.id} completed successfully, result: ${result}`);
+    logger.info(`Job ${job.id} completed successfully, result: ${result}`);
     await updateSuccessfulJob(job);
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -48,12 +49,12 @@ async function executeJob(job: ScrapingJob): Promise<void> {
 
 async function updateSuccessfulJob(job: ScrapingJob): Promise<void> {
   await queries.scrapingJobs.updateJobToCompleted(db, job.id);
-  console.log(`Job ${job.id} completed successfully`);
+  logger.info(`Job ${job.id} completed successfully`);
 }
 
 async function updateFailedJob(job: ScrapingJob, error: Error): Promise<void> {
   await queries.scrapingJobs.updateJobToFailed(db, job.id);
-  console.log(`Job ${job.id} failed: ${error.message}`);
+  logger.error(`Job ${job.id} failed: ${error.message}`);
 }
 
 async function processBatch(): Promise<number> {
