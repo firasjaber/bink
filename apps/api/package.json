@@ -12,7 +12,6 @@
     "@lucia-auth/oauth": "^3.5.3",
     "argon2": "^0.40.3",
     "db": "workspace:*",
-    "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.5.1",
     "echo": "workspace:*",
     "elysia": "latest",

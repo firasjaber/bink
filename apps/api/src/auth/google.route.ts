@@ -1,10 +1,8 @@
 import Elysia from "elysia";
 import { generateGoogleAuthUrl, oauth2Client } from "../oauth/google";
 import { drizzle } from "..";
-import { userTable } from "db";
 import { lucia } from "../lucia";
-import { eq } from "drizzle-orm";
-
+import * as queries from "db/src/queries";
 export const googleAuth = new Elysia({ prefix: "/auth/google" })
   .get("/", async () => {
     const url = generateGoogleAuthUrl();
@@ -41,30 +39,30 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
       } = userinfo.data;
 
       // Check if user exists
-      const existingUser = await drizzle
-        .select()
-        .from(userTable)
-        .where(eq(userTable.googleId, googleId))
-        .limit(1);
+      const existingUser = await queries.user.selectUserByGoogleId(
+        drizzle,
+        googleId
+      );
 
       let userId: string;
 
-      if (existingUser.length === 0) {
+      if (!existingUser) {
         // Create new user
-        const [newUser] = await drizzle
-          .insert(userTable)
-          .values({
-            email,
-            firstName,
-            lastName,
-            googleId,
-            profilePicture,
-          })
-          .returning({ id: userTable.id });
+        const newUser = await queries.user.insertUser(drizzle, {
+          email,
+          firstName,
+          lastName,
+          googleId,
+          profilePicture,
+        });
+
+        if (!newUser) {
+          throw error("Internal Server Error", "Failed to create user");
+        }
 
         userId = newUser.id;
       } else {
-        userId = existingUser[0].id;
+        userId = existingUser.id;
       }
 
       // Create session

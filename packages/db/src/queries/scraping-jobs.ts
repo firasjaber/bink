@@ -48,3 +48,16 @@ export async function updateJobToFailed(
     .set({ status: "failed", lockedAt: null, updatedAt: now })
     .where(eq(scrapingJobs.id, jobId));
 }
+
+export async function insertScrapingJob(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  job: {
+    event: "scrape_og";
+    url: string;
+    linkId: string;
+    priority: number;
+  }
+) {
+  const dbJob = await db.insert(scrapingJobs).values(job).returning();
+  return dbJob[0];
+}
