@@ -1,39 +1,23 @@
-import { eq, and, isNull, desc, asc, inArray } from "drizzle-orm";
-import { scrapingJobs, type ScrapingJob } from "db/src/schema";
+import { type ScrapingJob } from "db/src/schema";
 import { db } from "./index";
-import type { JobResult, LinkData } from "./types";
 import { getJobHandler } from "./registry";
+import * as queries from "db/src/queries";
 
 const BATCH_SIZE = 10;
 
 async function fetchJobs(): Promise<ScrapingJob[]> {
-  const now = new Date();
-
   // First, select the jobs
-  const jobsToUpdate = await db
-    .select()
-    .from(scrapingJobs)
-    .where(
-      and(eq(scrapingJobs.status, "pending"), isNull(scrapingJobs.lockedAt))
-    )
-    .orderBy(desc(scrapingJobs.priority), asc(scrapingJobs.createdAt))
-    .limit(BATCH_SIZE);
+  const jobsToUpdate = await queries.scrapingJobs.getPendingJobs(
+    db,
+    BATCH_SIZE
+  );
 
   // Then, update the selected jobs
   if (jobsToUpdate.length > 0) {
-    await db
-      .update(scrapingJobs)
-      .set({
-        status: "processing",
-        lockedAt: now,
-        updatedAt: now,
-      })
-      .where(
-        inArray(
-          scrapingJobs.id,
-          jobsToUpdate.map((job) => job.id)
-        )
-      );
+    await queries.scrapingJobs.updateJobsToProcessing(
+      db,
+      jobsToUpdate.map((job) => job.id)
+    );
   }
 
   return jobsToUpdate;
@@ -51,7 +35,8 @@ async function executeJob(job: ScrapingJob): Promise<void> {
 
   try {
     const result = await handler.execute(job);
-    await updateSuccessfulJob(job, result);
+    console.log(`Job ${job.id} completed successfully, result: ${result}`);
+    await updateSuccessfulJob(job);
   } catch (error: unknown) {
     if (error instanceof Error) {
       await updateFailedJob(job, error);
@@ -61,31 +46,13 @@ async function executeJob(job: ScrapingJob): Promise<void> {
   }
 }
 
-async function updateSuccessfulJob(
-  job: ScrapingJob,
-  result: JobResult<LinkData>
-): Promise<void> {
-  console.log(result);
-  await db
-    .update(scrapingJobs)
-    .set({
-      status: "completed",
-      updatedAt: new Date(),
-      lockedAt: null,
-    })
-    .where(eq(scrapingJobs.id, job.id));
+async function updateSuccessfulJob(job: ScrapingJob): Promise<void> {
+  await queries.scrapingJobs.updateJobToCompleted(db, job.id);
   console.log(`Job ${job.id} completed successfully`);
 }
 
 async function updateFailedJob(job: ScrapingJob, error: Error): Promise<void> {
-  await db
-    .update(scrapingJobs)
-    .set({
-      status: "failed",
-      updatedAt: new Date(),
-      lockedAt: null,
-    })
-    .where(eq(scrapingJobs.id, job.id));
+  await queries.scrapingJobs.updateJobToFailed(db, job.id);
   console.log(`Job ${job.id} failed: ${error.message}`);
 }
 
