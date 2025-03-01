@@ -3,7 +3,7 @@ import { LinkStateEnum, linkTable, type ScrapingJob } from "db/src/schema";
 import ogs from "open-graph-scraper";
 import { LinkDataSchema } from "../types";
 import { db } from "..";
-import { eq } from "drizzle-orm";
+import * as queries from "db/src/queries";
 
 export const scrapeOgHandler: JobHandler<LinkData> = {
   async execute(job: ScrapingJob): Promise<JobResult<LinkData>> {
@@ -12,15 +12,12 @@ export const scrapeOgHandler: JobHandler<LinkData> = {
     const data = await parseLinkData(job.url);
 
     // update the link with the data
-    await db
-      .update(linkTable)
-      .set({
-        title: data.title,
-        description: data.description,
-        image: data.image,
-        state: LinkStateEnum.PROCESSED,
-      })
-      .where(eq(linkTable.id, job.linkId));
+    await queries.link.update(db, job.linkId, {
+      title: data.title,
+      description: data.description,
+      image: data.image,
+      state: "processed",
+    });
 
     return {
       success: true,
