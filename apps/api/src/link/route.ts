@@ -1,31 +1,14 @@
 import Elysia, { t } from "elysia";
 import { drizzle } from "..";
-import {
-  sql,
-  eq,
-  and,
-  desc,
-  notInArray,
-  count,
-  isNull,
-  cosineDistance,
-  gt,
-} from "drizzle-orm";
 import { getUserIdFromSession, validateSession } from "../auth";
-import {
-  insertScrapingJobSchema,
-  LinkStateEnum,
-  linkTable,
-  linkTagTable,
-  scrapingJobs,
-  linkTagsToLinks,
-} from "db/src/schema";
+import { LinkStateEnum } from "db/src/schema";
 import { insertLinkSchema } from "db/src/zod.schema";
 import {
   isURLReachable,
   extractTextFromNotes,
   convertTextToEmbeddings,
 } from "./helper";
+import * as queries from "db/src/queries";
 
 export const links = new Elysia({ prefix: "/links" }).guard(
   {
@@ -58,137 +41,28 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             let total: { count: number }[] = [{ count: 0 }];
             if (query.smartSearch && query.search) {
               const embedding = await convertTextToEmbeddings(query.search);
-              const similarity = sql<number>`1 - (${cosineDistance(linkTable.embedding, embedding)})`;
-              total = await drizzle
-                .select({ count: count() })
-                .from(linkTable)
-                .where(and(eq(linkTable.userId, userId), gt(similarity, 0.65)));
-              links = await drizzle
-                .select({
-                  id: linkTable.id,
-                  url: linkTable.url,
-                  title: linkTable.title,
-                  description: linkTable.description,
-                  image: linkTable.image,
-                  state: linkTable.state,
-                  createdAt: linkTable.createdAt,
-                  similarity: similarity,
-                  tags: sql<Array<{ name: string; color: string }>>`
-                  array_agg(
-                    CASE 
-                      WHEN ${linkTagTable.name} IS NOT NULL 
-                      THEN json_build_object(
-                        'name', ${linkTagTable.name},
-                        'color', ${linkTagTable.color}
-                      )
-                      ELSE NULL 
-                    END
-                  )`,
-                })
-                .from(linkTable)
-                .leftJoin(
-                  linkTagsToLinks,
-                  eq(linkTable.id, linkTagsToLinks.linkId)
-                )
-                .leftJoin(
-                  linkTagTable,
-                  eq(linkTagsToLinks.tagId, linkTagTable.id)
-                )
-                .where(
-                  and(
-                    eq(linkTable.userId, userId),
-                    query.search ? gt(similarity, 0.7) : undefined,
-                    cursor
-                      ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
-                      : undefined
-                  )
-                )
-                .groupBy(
-                  linkTable.id,
-                  linkTable.url,
-                  linkTable.title,
-                  linkTable.description,
-                  linkTable.image,
-                  linkTable.state,
-                  linkTable.createdAt
-                )
-                .orderBy((t) => desc(t.similarity))
-                .limit(limit + 1);
-            } else {
-              total = await drizzle
-                .select({ count: count() })
-                .from(linkTable)
-                .where(
-                  and(
-                    eq(linkTable.userId, userId),
-                    query.search
-                      ? sql`(
-                          setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
-                        )
-                        @@ websearch_to_tsquery('english', ${query.search})`
-                      : undefined
-                  )
+              const { total: resultTotal, links: resultLinks } =
+                await queries.link.selectLinksByEmbeddingSimilarity(
+                  drizzle,
+                  userId,
+                  embedding,
+                  limit,
+                  cursor,
+                  query.search
                 );
-
-              links = await drizzle
-                .select({
-                  id: linkTable.id,
-                  url: linkTable.url,
-                  title: linkTable.title,
-                  description: linkTable.description,
-                  image: linkTable.image,
-                  state: linkTable.state,
-                  createdAt: linkTable.createdAt,
-                  tags: sql<Array<{ name: string; color: string }>>`
-                  array_agg(
-                    CASE 
-                      WHEN ${linkTagTable.name} IS NOT NULL 
-                      THEN json_build_object(
-                        'name', ${linkTagTable.name},
-                        'color', ${linkTagTable.color}
-                      )
-                      ELSE NULL 
-                    END
-                  )`,
-                })
-                .from(linkTable)
-                .leftJoin(
-                  linkTagsToLinks,
-                  eq(linkTable.id, linkTagsToLinks.linkId)
-                )
-                .leftJoin(
-                  linkTagTable,
-                  eq(linkTagsToLinks.tagId, linkTagTable.id)
-                )
-                .where(
-                  and(
-                    eq(linkTable.userId, userId),
-                    query.search
-                      ? sql`(
-                        setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
-                        setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
-                        setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
-                      )
-                      @@ websearch_to_tsquery('english', ${query.search})`
-                      : undefined,
-                    cursor
-                      ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
-                      : undefined
-                  )
-                )
-                .groupBy(
-                  linkTable.id,
-                  linkTable.url,
-                  linkTable.title,
-                  linkTable.description,
-                  linkTable.image,
-                  linkTable.state,
-                  linkTable.createdAt
-                )
-                .orderBy(desc(linkTable.createdAt))
-                .limit(limit + 1);
+              total = resultTotal;
+              links = resultLinks;
+            } else {
+              const { total: resultTotal, links: resultLinks } =
+                await queries.link.selectLinksByFullTextSearch(
+                  drizzle,
+                  userId,
+                  limit,
+                  query.search,
+                  cursor
+                );
+              total = resultTotal;
+              links = resultLinks;
             }
 
             // Transform the response to handle null tags
@@ -231,19 +105,17 @@ export const links = new Elysia({ prefix: "/links" }).guard(
       .get(
         "/:id",
         async ({ userId, params: { id }, error }) => {
-          const link = await drizzle
-            .select()
-            .from(linkTable)
-            .where(
-              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
-            )
-            .limit(1);
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
 
-          if (link.length === 0) {
+          const link = await queries.link.selectLinkById(drizzle, id, userId);
+
+          if (!link) {
             throw error("Not Found", "Link not found");
           }
 
-          return { data: link[0] };
+          return { data: link };
         },
         {
           params: t.Object({
@@ -265,20 +137,17 @@ export const links = new Elysia({ prefix: "/links" }).guard(
             userId,
           });
 
-          const dbLink = await drizzle
-            .insert(linkTable)
-            .values(link)
-            .returning();
+          const dbLink = await queries.link.insertLink(drizzle, link);
 
-          const job = insertScrapingJobSchema.parse({
-            event: "scrape_og",
+          const job = {
+            event: "scrape_og" as const,
             url: link.url,
-            linkId: dbLink[0].id,
+            linkId: dbLink.id,
             priority: 1,
-          });
+          };
 
           // add the srapeOg job to the queue
-          await drizzle.insert(scrapingJobs).values(job);
+          await queries.scrapingJobs.insertScrapingJob(drizzle, job);
 
           return { status: "success", message: "Link created" };
         },
@@ -291,23 +160,21 @@ export const links = new Elysia({ prefix: "/links" }).guard(
       .delete(
         "/:id",
         async ({ userId, params: { id }, error }) => {
-          const link = await drizzle
-            .select()
-            .from(linkTable)
-            .where(
-              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
-            )
-            .limit(1);
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
 
-          if (link.length === 0) {
+          const link = await queries.link.selectLinkById(drizzle, id, userId);
+
+          if (!link) {
             throw error("Not Found", "Link not found");
           }
 
-          if (link[0].userId !== userId) {
+          if (link.userId !== userId) {
             throw error("Forbidden", "You are not allowed to delete this link");
           }
 
-          await drizzle.delete(linkTable).where(eq(linkTable.id, id));
+          await queries.link.deleteLink(drizzle, id);
 
           return { status: "success", message: "Link deleted" };
         },
@@ -320,35 +187,30 @@ export const links = new Elysia({ prefix: "/links" }).guard(
       .put(
         "/:id",
         async ({ userId, params: { id }, body, error }) => {
-          const link = await drizzle
-            .select()
-            .from(linkTable)
-            .where(
-              and(eq(linkTable.id, id), eq(linkTable.userId, userId as string))
-            )
-            .limit(1);
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
 
-          if (link.length === 0) {
+          const link = await queries.link.selectLinkById(drizzle, id, userId);
+
+          if (!link) {
             throw error("Not Found", "Link not found");
           }
 
-          if (link[0].userId !== userId) {
+          if (link.userId !== userId) {
             throw error("Forbidden", "You are not allowed to update this link");
           }
 
-          await drizzle
-            .update(linkTable)
-            .set({
-              title: body.title ?? undefined,
-              description: body.description ?? undefined,
-              image: body.image ?? undefined,
-              url: body.url ?? undefined,
-              notes: body.notes ?? undefined,
-              notesText: body.notes
-                ? extractTextFromNotes(JSON.parse(body.notes))
-                : undefined,
-            })
-            .where(eq(linkTable.id, id));
+          await queries.link.updateLink(drizzle, id, {
+            title: body.title ?? undefined,
+            description: body.description ?? undefined,
+            image: body.image ?? undefined,
+            url: body.url ?? undefined,
+            notes: body.notes ?? undefined,
+            notesText: body.notes
+              ? extractTextFromNotes(JSON.parse(body.notes))
+              : undefined,
+          });
 
           return { status: "success", message: "Link updated" };
         },
@@ -366,35 +228,17 @@ export const links = new Elysia({ prefix: "/links" }).guard(
         }
       )
       .get("/:id/tags", async ({ params: { id } }) => {
-        const linkTags = await drizzle
-          .select({
-            id: linkTagTable.id,
-            name: linkTagTable.name,
-            color: linkTagTable.color,
-            isSystem: linkTagTable.isSystem,
-          })
-          .from(linkTagsToLinks)
-          .innerJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
-          .where(eq(linkTagsToLinks.linkId, id));
+        const linkTags = await queries.link.selectLinkTags(drizzle, id);
         if (linkTags.length === 0) {
-          const allSystemTags = await drizzle
-            .select()
-            .from(linkTagTable)
-            .where(eq(linkTagTable.isSystem, true));
+          const allSystemTags =
+            await queries.link.selectAllSystemLinkTags(drizzle);
           return { data: { linkTags: [], otherAvailableTags: allSystemTags } };
         }
 
-        const otherAvailableTags = await drizzle
-          .select()
-          .from(linkTagTable)
-          .where(
-            and(
-              eq(linkTagTable.isSystem, true),
-              notInArray(
-                linkTagTable.id,
-                linkTags.map((tag) => tag.id)
-              )
-            )
+        const otherAvailableTags =
+          await queries.link.selectLinkOtherAvailableTagsByLinkIds(
+            drizzle,
+            linkTags.map((tag) => tag.link_tag.id)
           );
 
         return {
@@ -404,56 +248,22 @@ export const links = new Elysia({ prefix: "/links" }).guard(
       .put(
         "/:id/tags",
         async ({ userId, params: { id }, body, error }) => {
-          return await drizzle.transaction(async (tx) => {
-            // First verify the link exists and belongs to the user
-            const link = await tx
-              .select()
-              .from(linkTable)
-              .where(
-                and(
-                  eq(linkTable.id, id),
-                  eq(linkTable.userId, userId as string)
-                )
-              )
-              .limit(1);
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
 
-            if (link.length === 0) {
-              throw error("Not Found", "Link not found");
-            }
+          try {
+            await queries.link.deleteLinkTagsByLinkId(
+              drizzle,
+              id,
+              userId,
+              body.tags
+            );
+          } catch (_) {
+            throw error("Not Found", "Link not found");
+          }
 
-            // Delete existing tag relations for this link
-            await tx
-              .delete(linkTagsToLinks)
-              .where(eq(linkTagsToLinks.linkId, id));
-
-            // Process each tag
-            for (const tag of body.tags) {
-              let tagId = tag.id;
-
-              // If no id, create new tag
-              if (!tagId) {
-                const [newTag] = await tx
-                  .insert(linkTagTable)
-                  .values({
-                    name: tag.name,
-                    color: tag.color,
-                    userId,
-                    isSystem: false,
-                  })
-                  .returning({ id: linkTagTable.id });
-
-                tagId = newTag.id;
-              }
-
-              // Create relation between link and tag
-              await tx.insert(linkTagsToLinks).values({
-                linkId: id,
-                tagId,
-              });
-            }
-
-            return { status: "success", message: "Tags updated successfully" };
-          });
+          return { status: "success", message: "Link tags updated" };
         },
         {
           body: t.Object({
@@ -467,26 +277,25 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
-      .put("/embeddings", async ({ userId, set }) => {
+      .put("/embeddings", async ({ userId, set, error }) => {
         try {
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
           // Get all the users links with the embeddings not set
-          const links = await drizzle
-            .select()
-            .from(linkTable)
-            .where(
-              and(
-                eq(linkTable.userId, userId as string),
-                isNull(linkTable.embedding)
-              )
-            );
+          const links = await queries.link.selectLinksByUserIdWithoutEmbedding(
+            drizzle,
+            userId
+          );
           for (const link of links) {
             const embeddings = await convertTextToEmbeddings(
               link.title + " " + link.description + " " + link.notesText
             );
-            await drizzle
-              .update(linkTable)
-              .set({ embedding: embeddings })
-              .where(eq(linkTable.id, link.id));
+            await queries.link.updateLinkEmbedding(
+              drizzle,
+              link.id,
+              embeddings
+            );
           }
           return { status: "success", message: "Embeddings updated" };
         } catch (error) {

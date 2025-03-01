@@ -1,26 +1,19 @@
-import Elysia, { error, t, ValidationError } from "elysia";
+import Elysia, { error, t } from "elysia";
 import { lucia } from "../lucia";
-import { userTable } from "db";
 import { drizzle } from "..";
-import { sql } from "drizzle-orm";
 import argon from "argon2";
 import { getUserIdFromSession, validateSession } from "../auth";
+import * as queries from "db/src/queries";
 
 export const users = new Elysia({ prefix: "/users" })
   .post(
     "/login",
     async ({ body, error, set }) => {
-      const users = await drizzle
-        .select()
-        .from(userTable)
-        .where(sql`email = ${body.email}`)
-        .limit(1);
+      const user = await queries.user.selectUserByEmail(drizzle, body.email);
 
-      if (users.length === 0) {
+      if (!user) {
         throw error("Unauthorized", "Invalid credentials");
       }
-
-      const user = users[0];
 
       if (user.password === null || user.googleId) {
         set.status = 401;
@@ -49,31 +42,27 @@ export const users = new Elysia({ prefix: "/users" })
     "/register",
     async ({ body, error, set }) => {
       // check if a user with the same email already exists
-      const existingUser = await drizzle
-        .select()
-        .from(userTable)
-        .where(sql`email = ${body.email}`)
-        .limit(1);
-      if (existingUser.length) {
+      const existingUser = await queries.user.selectUserByEmail(
+        drizzle,
+        body.email
+      );
+      if (existingUser) {
         throw error("Bad Request", "User with this email already exists");
       }
 
       const hashedPassword = await argon.hash(body.password);
-      const users = await drizzle
-        .insert(userTable)
-        .values({
-          email: body.email,
-          password: hashedPassword,
-          firstName: body.firstName,
-          lastName: body.lastName,
-        })
-        .returning();
+      const user = await queries.user.insertUser(drizzle, {
+        email: body.email,
+        password: hashedPassword,
+        firstName: body.firstName,
+        lastName: body.lastName,
+      });
 
-      if (users.length === 0) {
+      if (!user) {
         throw error("Internal Server Error", "Failed to create user");
       }
 
-      const session = await lucia.createSession(users[0].id, {});
+      const session = await lucia.createSession(user.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
       set.headers["Set-Cookie"] = sessionCookie.serialize();
 
@@ -116,25 +105,19 @@ export const users = new Elysia({ prefix: "/users" })
           return { message: "Logged out" };
         })
         .get("/loggedin", async ({ userId, error, headers }) => {
-          const users = await drizzle
-            .select({
-              id: userTable.id,
-              firstName: userTable.firstName,
-              lastName: userTable.lastName,
-              email: userTable.email,
-              createdAt: userTable.createdAt,
-              profilePicture: userTable.profilePicture,
-            })
-            .from(userTable)
-            .where(sql`id = ${userId}`)
-            .limit(1);
-          if (users.length === 0) {
+          if (!userId) {
+            throw error("Unauthorized", "Invalid session");
+          }
+
+          const user = await queries.user.selectUserById(drizzle, userId);
+
+          if (!user) {
             const sessionId = lucia.readSessionCookie(headers.cookie ?? "");
             if (sessionId) {
               await lucia.invalidateSession(sessionId).catch(() => false);
             }
-            throw error("Internal Server Error", "User not found");
+            throw error("Unauthorized", "Invalid session");
           }
-          return { data: users[0] };
+          return { data: user };
         })
   );
