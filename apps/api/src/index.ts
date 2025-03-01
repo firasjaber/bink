@@ -4,8 +4,9 @@ import cors from "@elysiajs/cors";
 import { initDrizzle } from "db";
 import { links } from "./link/route";
 import { googleAuth } from "./auth/google.route";
+import { config } from "./config";
 
-export const drizzle = await initDrizzle();
+export const drizzle = await initDrizzle(config.DATABASE_URL);
 console.log("🐘 Database connected");
 
 const app = new Elysia()
@@ -20,10 +21,10 @@ const app = new Elysia()
   .use(users)
   .use(links)
   .use(googleAuth)
-  .listen(3000);
+  .listen(config.PORT);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 );
 
 export type App = typeof app;

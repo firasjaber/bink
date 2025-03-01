@@ -9,7 +9,7 @@ import {
 import { hash } from "@node-rs/argon2";
 
 async function seed() {
-  const db = await initDrizzle();
+  const db = await initDrizzle("postgres://user:password@localhost:5433/db");
   // Create system tags
   const systemTags = [
     { name: "Technology", color: "#FF5733", isSystem: true },
