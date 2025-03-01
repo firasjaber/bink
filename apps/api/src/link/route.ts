@@ -9,8 +9,9 @@ import {
   convertTextToEmbeddings,
 } from "./helper";
 import * as queries from "db/src/queries";
+import { logger } from "@bogeychan/elysia-logger";
 
-export const links = new Elysia({ prefix: "/links" }).guard(
+export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
   {
     async beforeHandle({ headers, error }) {
       const isValidSession = await validateSession(headers.cookie ?? "");
@@ -28,7 +29,8 @@ export const links = new Elysia({ prefix: "/links" }).guard(
       })
       .get(
         "",
-        async ({ query, userId, set }) => {
+        async ({ query, userId, set, log }) => {
+          log.info("get links");
           if (userId === null) {
             set.status = 401;
             return {
@@ -86,7 +88,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
               total: total[0].count,
             };
           } catch (error) {
-            console.log(error);
+            log.error(error, "Error getting links");
             set.status = 500;
             return {
               error: "Internal Server Error",
@@ -277,7 +279,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }),
         }
       )
-      .put("/embeddings", async ({ userId, set, error }) => {
+      .put("/embeddings", async ({ userId, set, error, log }) => {
         try {
           if (!userId) {
             throw error("Unauthorized", "Invalid session");
@@ -299,7 +301,7 @@ export const links = new Elysia({ prefix: "/links" }).guard(
           }
           return { status: "success", message: "Embeddings updated" };
         } catch (error) {
-          console.log(error);
+          log.error(error, "Error updating embeddings");
           set.status = 500;
           return { status: "error", message: "Failed to update embeddings" };
         }
