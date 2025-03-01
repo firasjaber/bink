@@ -3,12 +3,15 @@ import { generateGoogleAuthUrl, oauth2Client } from "../oauth/google";
 import { drizzle } from "..";
 import { lucia } from "../lucia";
 import * as queries from "db/src/queries";
+import { logger } from "@bogeychan/elysia-logger";
+
 export const googleAuth = new Elysia({ prefix: "/auth/google" })
+  .use(logger())
   .get("/", async () => {
     const url = generateGoogleAuthUrl();
     return { url };
   })
-  .get("/callback", async ({ query, error, set }) => {
+  .get("/callback", async ({ query, error, set, log }) => {
     const { code } = query;
 
     if (!code) {
@@ -74,12 +77,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
         email,
       };
     } catch (error) {
-      // if (error instanceof OAuthRequestError) {
-      //   console.log(error);
-      //   set.status = 400;
-      //   return;
-      // }
-      console.error(error);
+      log.error(error, "Error occured whilehandling google auth callback");
       set.status = 500;
     }
   });

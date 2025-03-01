@@ -5,11 +5,18 @@ import { initDrizzle } from "db";
 import { links } from "./link/route";
 import { googleAuth } from "./auth/google.route";
 import { config } from "./config";
+import { logger } from "@bogeychan/elysia-logger";
+import { logger as mainLogger } from "./logger";
 
 export const drizzle = await initDrizzle(config.DATABASE_URL);
-console.log("🐘 Database connected");
+mainLogger.info("🐘 Database connected");
 
 const app = new Elysia()
+  .use(
+    logger({
+      level: "info",
+    })
+  )
   .use(
     cors({
       origin: true,
@@ -23,7 +30,7 @@ const app = new Elysia()
   .use(googleAuth)
   .listen(config.PORT);
 
-console.log(
+mainLogger.info(
   `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
 );
 
