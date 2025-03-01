@@ -1,13 +1,10 @@
 import { OAuth2Client } from "google-auth-library";
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const REDIRECT_URI = "http://localhost:5173/auth/callback";
+import { config } from "../config";
 
 export const oauth2Client = new OAuth2Client(
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  REDIRECT_URI
+  config.GOOGLE_OAUTH_CLIENT_ID,
+  config.GOOGLE_OAUTH_CLIENT_SECRET,
+  config.GOOGLE_REDIRECT_URI
 );
 
 export function generateGoogleAuthUrl() {
