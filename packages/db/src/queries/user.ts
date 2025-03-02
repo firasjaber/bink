@@ -1,16 +1,12 @@
-import { userTable } from "../schema";
-import { initDrizzle } from "../client";
-import { eq } from "drizzle-orm";
+import { userTable } from '../schema';
+import { initDrizzle } from '../client';
+import { eq } from 'drizzle-orm';
 
 export async function selectUserByEmail(
   db: Awaited<ReturnType<typeof initDrizzle>>,
-  email: string
+  email: string,
 ) {
-  const user = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.email, email))
-    .limit(1);
+  const user = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
 
   if (user.length === 0) {
     return null;
@@ -19,15 +15,8 @@ export async function selectUserByEmail(
   return user[0];
 }
 
-export async function selectUserById(
-  db: Awaited<ReturnType<typeof initDrizzle>>,
-  id: string
-) {
-  const user = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.id, id))
-    .limit(1);
+export async function selectUserById(db: Awaited<ReturnType<typeof initDrizzle>>, id: string) {
+  const user = await db.select().from(userTable).where(eq(userTable.id, id)).limit(1);
 
   if (user.length === 0) {
     return null;
@@ -38,13 +27,9 @@ export async function selectUserById(
 
 export async function selectUserByGoogleId(
   db: Awaited<ReturnType<typeof initDrizzle>>,
-  googleId: string
+  googleId: string,
 ) {
-  const user = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.googleId, googleId))
-    .limit(1);
+  const user = await db.select().from(userTable).where(eq(userTable.googleId, googleId)).limit(1);
 
   if (user.length === 0) {
     return null;
@@ -61,7 +46,7 @@ export async function insertUser(
     lastName: string;
     googleId?: string;
     profilePicture?: string;
-  }
+  },
 ) {
   const user = await db
     .insert(userTable)

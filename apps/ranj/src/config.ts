@@ -1,10 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const configSchema = z.object({
   /** Current environment the application is running in */
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   /** DATABASE URL  */
   DATABASE_URL: z.string().url(),
@@ -19,7 +17,7 @@ function validateEnvConfig(env: NodeJS.ProcessEnv): Config {
   });
 
   if (!result.success) {
-    console.error("❌ Invalid ENV configuration:", result.error.format());
+    console.error('❌ Invalid ENV configuration:', result.error.format());
     process.exit(1);
   }
 

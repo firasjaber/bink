@@ -1,23 +1,20 @@
-import { type ScrapingJob } from "db/src/schema";
-import { db } from "./index";
-import { getJobHandler } from "./registry";
-import * as queries from "db/src/queries";
-import { logger } from "./logger";
+import { type ScrapingJob } from 'db/src/schema';
+import { db } from './index';
+import { getJobHandler } from './registry';
+import * as queries from 'db/src/queries';
+import { logger } from './logger';
 
 const BATCH_SIZE = 10;
 
 async function fetchJobs(): Promise<ScrapingJob[]> {
   // First, select the jobs
-  const jobsToUpdate = await queries.scrapingJobs.getPendingJobs(
-    db,
-    BATCH_SIZE
-  );
+  const jobsToUpdate = await queries.scrapingJobs.getPendingJobs(db, BATCH_SIZE);
 
   // Then, update the selected jobs
   if (jobsToUpdate.length > 0) {
     await queries.scrapingJobs.updateJobsToProcessing(
       db,
-      jobsToUpdate.map((job) => job.id)
+      jobsToUpdate.map((job) => job.id),
     );
   }
 
@@ -27,10 +24,7 @@ async function fetchJobs(): Promise<ScrapingJob[]> {
 async function executeJob(job: ScrapingJob): Promise<void> {
   const handler = getJobHandler(job.event);
   if (!handler) {
-    await updateFailedJob(
-      job,
-      new Error(`No handler found for event type: ${job.event}`)
-    );
+    await updateFailedJob(job, new Error(`No handler found for event type: ${job.event}`));
     return;
   }
 

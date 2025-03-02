@@ -1,4 +1,4 @@
-import { initDrizzle } from "../client";
+import { initDrizzle } from '../client';
 import {
   eq,
   and,
@@ -10,24 +10,21 @@ import {
   count,
   cosineDistance,
   gt,
-} from "drizzle-orm";
-import { linkTable, linkTagsToLinks, linkTagTable } from "../schema";
+} from 'drizzle-orm';
+import { linkTable, linkTagsToLinks, linkTagTable } from '../schema';
 
 export async function selectLinksByUserId(
   db: Awaited<ReturnType<typeof initDrizzle>>,
-  userId: string
+  userId: string,
 ) {
-  const links = await db
-    .select()
-    .from(linkTable)
-    .where(eq(linkTable.userId, userId));
+  const links = await db.select().from(linkTable).where(eq(linkTable.userId, userId));
   return links;
 }
 
 export async function selectLinkById(
   db: Awaited<ReturnType<typeof initDrizzle>>,
   linkId: string,
-  userId: string
+  userId: string,
 ) {
   const link = await db
     .select()
@@ -47,7 +44,7 @@ export async function selectLinksByEmbeddingSimilarity(
   embedding: number[],
   limit: number,
   cursor?: string,
-  searchQuery?: string
+  searchQuery?: string,
 ) {
   const similarity = sql<number>`1 - (${cosineDistance(linkTable.embedding, embedding)})`;
   const total = await db
@@ -83,10 +80,8 @@ export async function selectLinksByEmbeddingSimilarity(
       and(
         eq(linkTable.userId, userId),
         searchQuery ? gt(similarity, 0.7) : undefined,
-        cursor
-          ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
-          : undefined
-      )
+        cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
+      ),
     )
     .groupBy(
       linkTable.id,
@@ -95,7 +90,7 @@ export async function selectLinksByEmbeddingSimilarity(
       linkTable.description,
       linkTable.image,
       linkTable.state,
-      linkTable.createdAt
+      linkTable.createdAt,
     )
     .orderBy((t) => desc(t.similarity))
     .limit(limit + 1);
@@ -107,7 +102,7 @@ export async function selectLinksByFullTextSearch(
   userId: string,
   limit: number,
   searchQuery?: string,
-  cursor?: string
+  cursor?: string,
 ) {
   const total = await db
     .select({ count: count() })
@@ -122,8 +117,8 @@ export async function selectLinksByFullTextSearch(
                           setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
                         )
                         @@ websearch_to_tsquery('english', ${searchQuery})`
-          : undefined
-      )
+          : undefined,
+      ),
     );
 
   const links = await db
@@ -161,10 +156,8 @@ export async function selectLinksByFullTextSearch(
                       )
                       @@ websearch_to_tsquery('english', ${searchQuery})`
           : undefined,
-        cursor
-          ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}`
-          : undefined
-      )
+        cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
+      ),
     )
     .groupBy(
       linkTable.id,
@@ -173,7 +166,7 @@ export async function selectLinksByFullTextSearch(
       linkTable.description,
       linkTable.image,
       linkTable.state,
-      linkTable.createdAt
+      linkTable.createdAt,
     )
     .orderBy(desc(linkTable.createdAt))
     .limit(limit + 1);
@@ -188,8 +181,8 @@ export async function update(
     title?: string;
     description?: string;
     image?: string;
-    state?: "processed" | "failed" | "processed";
-  }
+    state?: 'processed' | 'failed' | 'processed';
+  },
 ) {
   return db.update(linkTable).set(data).where(eq(linkTable.id, linkId));
 }
@@ -199,17 +192,14 @@ export async function insertLink(
   link: {
     url: string;
     userId: string;
-    state: "processing" | "processed" | "failed";
-  }
+    state: 'processing' | 'processed' | 'failed';
+  },
 ) {
   const dbLink = await db.insert(linkTable).values(link).returning();
   return dbLink[0];
 }
 
-export async function deleteLink(
-  db: Awaited<ReturnType<typeof initDrizzle>>,
-  linkId: string
-) {
+export async function deleteLink(db: Awaited<ReturnType<typeof initDrizzle>>, linkId: string) {
   return db.delete(linkTable).where(eq(linkTable.id, linkId));
 }
 
@@ -223,15 +213,12 @@ export async function updateLink(
     url?: string;
     notes?: string;
     notesText?: string;
-  }
+  },
 ) {
   return db.update(linkTable).set(data).where(eq(linkTable.id, linkId));
 }
 
-export async function selectLinkTags(
-  db: Awaited<ReturnType<typeof initDrizzle>>,
-  linkId: string
-) {
+export async function selectLinkTags(db: Awaited<ReturnType<typeof initDrizzle>>, linkId: string) {
   return db
     .select()
     .from(linkTagsToLinks)
@@ -239,25 +226,18 @@ export async function selectLinkTags(
     .where(eq(linkTagsToLinks.linkId, linkId));
 }
 
-export async function selectAllSystemLinkTags(
-  db: Awaited<ReturnType<typeof initDrizzle>>
-) {
+export async function selectAllSystemLinkTags(db: Awaited<ReturnType<typeof initDrizzle>>) {
   return db.select().from(linkTagTable).where(eq(linkTagTable.isSystem, true));
 }
 
 export async function selectLinkOtherAvailableTagsByLinkIds(
   db: Awaited<ReturnType<typeof initDrizzle>>,
-  currentLinkTags: string[]
+  currentLinkTags: string[],
 ) {
   return db
     .select()
     .from(linkTagTable)
-    .where(
-      and(
-        eq(linkTagTable.isSystem, true),
-        notInArray(linkTagTable.id, currentLinkTags)
-      )
-    );
+    .where(and(eq(linkTagTable.isSystem, true), notInArray(linkTagTable.id, currentLinkTags)));
 }
 
 export async function deleteLinkTagsByLinkId(
@@ -268,20 +248,18 @@ export async function deleteLinkTagsByLinkId(
     id?: string;
     name: string;
     color: string;
-  }[]
+  }[],
 ) {
   return db.transaction(async (tx) => {
     // First verify the link exists and belongs to the user
     const link = await tx
       .select()
       .from(linkTable)
-      .where(
-        and(eq(linkTable.id, linkId), eq(linkTable.userId, userId as string))
-      )
+      .where(and(eq(linkTable.id, linkId), eq(linkTable.userId, userId as string)))
       .limit(1);
 
     if (link.length === 0) {
-      throw new Error("Link not found");
+      throw new Error('Link not found');
     }
 
     // Delete existing tag relations for this link
@@ -317,7 +295,7 @@ export async function deleteLinkTagsByLinkId(
 
 export async function selectLinksByUserIdWithoutEmbedding(
   db: Awaited<ReturnType<typeof initDrizzle>>,
-  userId: string
+  userId: string,
 ) {
   return db
     .select()
@@ -328,10 +306,7 @@ export async function selectLinksByUserIdWithoutEmbedding(
 export async function updateLinkEmbedding(
   db: Awaited<ReturnType<typeof initDrizzle>>,
   linkId: string,
-  embedding: number[]
+  embedding: number[],
 ) {
-  return db
-    .update(linkTable)
-    .set({ embedding })
-    .where(eq(linkTable.id, linkId));
+  return db.update(linkTable).set({ embedding }).where(eq(linkTable.id, linkId));
 }

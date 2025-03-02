@@ -15,8 +15,5 @@
     "format": "biome format --write",
     "format:check": "biome format"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "workspaces": ["apps/*", "packages/*"]
 }
