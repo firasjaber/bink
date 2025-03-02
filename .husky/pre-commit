@@ -1,0 +1,2 @@
+lint-staged 'biome lint' .
+lint-staged 'biome format:check' .

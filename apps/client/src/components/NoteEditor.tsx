@@ -1,6 +1,6 @@
-import { EditorContent, EditorRoot } from "novel";
-import type { JSONContent } from "novel";
-import { useState } from "react";
+import { EditorContent, EditorRoot } from 'novel';
+import type { JSONContent } from 'novel';
+import { useState } from 'react';
 
 const NoteEditor = () => {
   const [content, setContent] = useState(null);

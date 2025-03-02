@@ -1,11 +1,11 @@
-import type { JSONContent } from "novel";
-import { treaty } from "@elysiajs/eden";
-import type { App } from "../../api/src";
+import type { JSONContent } from 'novel';
+import { treaty } from '@elysiajs/eden';
+import type { App } from '../../api/src';
 
-const client = treaty<App>("localhost:3000", {
+const client = treaty<App>('localhost:3000', {
   fetch: {
-    credentials: "include",
-    mode: "cors",
+    credentials: 'include',
+    mode: 'cors',
   },
 });
 
@@ -35,7 +35,7 @@ export const getLoggedInUser = async () => {
     const res = await client.users.loggedin.get();
     return res.data?.data;
   } catch (_) {
-    localStorage.removeItem("sessionId");
+    localStorage.removeItem('sessionId');
     return null;
   }
 };
@@ -51,11 +51,7 @@ export const createLink = async (data: { url: string }) => {
   }
 };
 
-export const getLinks = async (
-  cursor: string | null,
-  search?: string,
-  smartSearch?: boolean
-) => {
+export const getLinks = async (cursor: string | null, search?: string, smartSearch?: boolean) => {
   const query: { cursor?: string; search?: string; smartSearch?: boolean } = {};
   if (cursor) {
     query.cursor = cursor;
@@ -107,7 +103,7 @@ export const updateLink = async (
     image?: string;
     url?: string;
     notes?: JSONContent;
-  }
+  },
 ) => {
   const res = await client.links({ id }).put({
     ...data,
@@ -121,7 +117,7 @@ export const updateLink = async (
 
 export const updateLinkTags = async (
   id: string,
-  data: { tags: { id?: string; name: string; color: string }[] }
+  data: { tags: { id?: string; name: string; color: string }[] },
 ) => {
   const res = await client.links({ id }).tags.put(data);
   if (res.error) {

@@ -1,29 +1,35 @@
-import { Elysia } from "elysia";
-import { users } from "./user/route";
-import cors from "@elysiajs/cors";
-import { initDrizzle } from "db";
-import { links } from "./link/route";
-import { googleAuth } from "./auth/google.route";
+import { Elysia } from 'elysia';
+import { users } from './user/route';
+import cors from '@elysiajs/cors';
+import { initDrizzle } from 'db';
+import { links } from './link/route';
+import { googleAuth } from './auth/google.route';
+import { config } from './config';
+import { logger } from '@bogeychan/elysia-logger';
+import { logger as mainLogger } from './logger';
 
-export const drizzle = await initDrizzle();
-console.log("🐘 Database connected");
+export const drizzle = await initDrizzle(config.DATABASE_URL);
+mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
+  .use(
+    logger({
+      level: 'info',
+    }),
+  )
   .use(
     cors({
       origin: true,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["content-type", "cookie"],
-    })
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['content-type', 'cookie'],
+    }),
   )
   .use(users)
   .use(links)
   .use(googleAuth)
-  .listen(3000);
+  .listen(config.PORT);
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+mainLogger.info(`🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`);
 
 export type App = typeof app;

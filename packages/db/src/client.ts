@@ -1,10 +1,10 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Client } from "pg";
-import * as schema from "./schema";
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Client } from 'pg';
+import * as schema from './schema';
 
-export const initDrizzle = async () => {
+export const initDrizzle = async (connectionString: string) => {
   const client = new Client({
-    connectionString: "postgres://user:password@localhost:5433/db",
+    connectionString,
   });
   await client.connect();
   const db = drizzle(client, {

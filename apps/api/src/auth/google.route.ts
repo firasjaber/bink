@@ -1,20 +1,21 @@
-import Elysia from "elysia";
-import { generateGoogleAuthUrl, oauth2Client } from "../oauth/google";
-import { drizzle } from "..";
-import { userTable } from "db";
-import { lucia } from "../lucia";
-import { eq } from "drizzle-orm";
+import Elysia from 'elysia';
+import { generateGoogleAuthUrl, oauth2Client } from '../oauth/google';
+import { drizzle } from '..';
+import { lucia } from '../lucia';
+import * as queries from 'db/src/queries';
+import { logger } from '@bogeychan/elysia-logger';
 
-export const googleAuth = new Elysia({ prefix: "/auth/google" })
-  .get("/", async () => {
+export const googleAuth = new Elysia({ prefix: '/auth/google' })
+  .use(logger())
+  .get('/', async () => {
     const url = generateGoogleAuthUrl();
     return { url };
   })
-  .get("/callback", async ({ query, error, set }) => {
+  .get('/callback', async ({ query, error, set, log }) => {
     const { code } = query;
 
     if (!code) {
-      throw error(400, "Authorization code required");
+      throw error(400, 'Authorization code required');
     }
 
     try {
@@ -29,7 +30,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
         family_name: string;
         picture: string;
       }>({
-        url: "https://www.googleapis.com/oauth2/v2/userinfo",
+        url: 'https://www.googleapis.com/oauth2/v2/userinfo',
       });
 
       const {
@@ -41,47 +42,39 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
       } = userinfo.data;
 
       // Check if user exists
-      const existingUser = await drizzle
-        .select()
-        .from(userTable)
-        .where(eq(userTable.googleId, googleId))
-        .limit(1);
+      const existingUser = await queries.user.selectUserByGoogleId(drizzle, googleId);
 
       let userId: string;
 
-      if (existingUser.length === 0) {
+      if (!existingUser) {
         // Create new user
-        const [newUser] = await drizzle
-          .insert(userTable)
-          .values({
-            email,
-            firstName,
-            lastName,
-            googleId,
-            profilePicture,
-          })
-          .returning({ id: userTable.id });
+        const newUser = await queries.user.insertUser(drizzle, {
+          email,
+          firstName,
+          lastName,
+          googleId,
+          profilePicture,
+        });
+
+        if (!newUser) {
+          throw error('Internal Server Error', 'Failed to create user');
+        }
 
         userId = newUser.id;
       } else {
-        userId = existingUser[0].id;
+        userId = existingUser.id;
       }
 
       // Create session
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      set.headers["Set-Cookie"] = sessionCookie.serialize();
+      set.headers['Set-Cookie'] = sessionCookie.serialize();
 
       return {
         email,
       };
     } catch (error) {
-      // if (error instanceof OAuthRequestError) {
-      //   console.log(error);
-      //   set.status = 400;
-      //   return;
-      // }
-      console.error(error);
+      log.error(error, 'Error occured whilehandling google auth callback');
       set.status = 500;
     }
   });
