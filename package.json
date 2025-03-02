@@ -7,13 +7,24 @@
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
     "globals": "^15.9.0",
+    "lint-staged": "^15.4.3",
     "typescript": "^5.0.0"
   },
   "scripts": {
     "lint": "biome lint",
     "lint:fix": "biome lint --fix",
     "format": "biome format --write",
-    "format:check": "biome format"
+    "format:check": "biome format",
+    "prepare": "bunx husky"
   },
-  "workspaces": ["apps/*", "packages/*"]
+  "workspaces": ["apps/*", "packages/*"],
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --files-ignore-unknown=true",
+      "biome check --write --no-errors-on-unmatched",
+      "biome check --write --organize-imports-enabled=false --no-errors-on-unmatched",
+      "biome check --write --unsafe --no-errors-on-unmatched"
+    ],
+    "*": ["biome check --no-errors-on-unmatched --files-ignore-unknown=true"]
+  }
 }
