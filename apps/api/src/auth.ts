@@ -1,4 +1,4 @@
-import { lucia } from "./lucia";
+import { lucia } from './lucia';
 
 export const validateSession = async (cookie: string) => {
   const sessionId = lucia.readSessionCookie(cookie);
@@ -26,7 +26,7 @@ export const getUserIdFromSession = async (cookie: string) => {
   const { user } = await lucia.validateSession(sessionId);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error('User not found');
   }
   return user.id;
 };

@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { getLoggedInUser, logout } from "@/eden";
+import { create } from 'zustand';
+import { getLoggedInUser, logout } from '@/eden';
 
 export interface AuthState {
   isAuth: boolean;
@@ -28,7 +28,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: async () => {
     try {
       const user = await getLoggedInUser();
-      if (!user) throw new Error("Session expired");
+      if (!user) throw new Error('Session expired');
       set({ user, isAuth: true, isLoading: false });
     } catch (_) {
       set({ ...initialState, isLoading: false });
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   initAuth: async () => {
     try {
       const user = await getLoggedInUser();
-      if (!user) throw new Error("Session expired");
+      if (!user) throw new Error('Session expired');
       set({ user, isAuth: true, isLoading: false });
     } catch (_error) {
       set({ ...initialState, isLoading: false });

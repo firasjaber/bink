@@ -2,7 +2,7 @@ export async function isURLReachable(urlString: string): Promise<boolean> {
   try {
     const url = new URL(urlString);
     const response: Response = await fetch(url, {
-      method: "HEAD",
+      method: 'HEAD',
       signal: AbortSignal.timeout(5000), // 5 seconds timeout
     });
 
@@ -23,7 +23,7 @@ interface TextNode {
 }
 
 export function extractTextFromNotes(notes: TextNode | null): string {
-  if (!notes) return "";
+  if (!notes) return '';
 
   const text: string[] = [];
 
@@ -39,14 +39,14 @@ export function extractTextFromNotes(notes: TextNode | null): string {
     }
   }
 
-  return text.join(" ").trim();
+  return text.join(' ').trim();
 }
 
 export async function convertTextToEmbeddings(text: string) {
-  const req = await fetch("http://localhost:11434/api/embeddings", {
-    method: "POST",
+  const req = await fetch('http://localhost:11434/api/embeddings', {
+    method: 'POST',
     body: JSON.stringify({
-      model: "jina/jina-embeddings-v2-base-en",
+      model: 'jina/jina-embeddings-v2-base-en',
       prompt: text,
     }),
   });

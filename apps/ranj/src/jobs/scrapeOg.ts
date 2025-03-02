@@ -1,26 +1,24 @@
-import type { JobHandler, JobResult, LinkData } from "../types";
-import { LinkStateEnum, linkTable, type ScrapingJob } from "db/src/schema";
-import ogs from "open-graph-scraper";
-import { LinkDataSchema } from "../types";
-import { db } from "..";
-import { eq } from "drizzle-orm";
+import type { JobHandler, JobResult, LinkData } from '../types';
+import { LinkStateEnum, linkTable, type ScrapingJob } from 'db/src/schema';
+import ogs from 'open-graph-scraper';
+import { LinkDataSchema } from '../types';
+import { db } from '..';
+import * as queries from 'db/src/queries';
+import { logger } from '../logger';
 
 export const scrapeOgHandler: JobHandler<LinkData> = {
   async execute(job: ScrapingJob): Promise<JobResult<LinkData>> {
-    console.log(`Scraping OG data for URL: ${job.url}`);
+    logger.info(`Scraping OG data for URL: ${job.url}`);
 
     const data = await parseLinkData(job.url);
 
     // update the link with the data
-    await db
-      .update(linkTable)
-      .set({
-        title: data.title,
-        description: data.description,
-        image: data.image,
-        state: LinkStateEnum.PROCESSED,
-      })
-      .where(eq(linkTable.id, job.linkId));
+    await queries.link.update(db, job.linkId, {
+      title: data.title,
+      description: data.description,
+      image: data.image,
+      state: 'processed',
+    });
 
     return {
       success: true,
@@ -35,7 +33,7 @@ export async function parseLinkData(url: string): Promise<LinkData> {
     const { result } = await ogs(options);
 
     if (!result.success) {
-      throw new Error("Failed to parse link data");
+      throw new Error('Failed to parse link data');
     }
 
     // Parse the result using the Zod schema
@@ -43,14 +41,11 @@ export async function parseLinkData(url: string): Promise<LinkData> {
       siteName: result.ogSiteName,
       title: result.ogTitle,
       description: result.ogDescription,
-      image:
-        result.ogImage && result.ogImage.length > 0
-          ? result.ogImage[0].url
-          : undefined,
+      image: result.ogImage && result.ogImage.length > 0 ? result.ogImage[0].url : undefined,
     });
 
     return parsedData;
   } catch (_error) {
-    throw new Error("Failed to parse link data");
+    throw new Error('Failed to parse link data');
   }
 }
