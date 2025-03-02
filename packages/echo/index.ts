@@ -1,3 +1,4 @@
 export function echo(message: string): string {
-  return message;
+  const text = 'test' + message;
+  return text;
 }
