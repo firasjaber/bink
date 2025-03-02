@@ -1,5 +1,5 @@
-import type { ScrapingJob } from "db/src/schema";
-import { z } from "zod";
+import type { ScrapingJob } from 'db/src/schema';
+import { z } from 'zod';
 
 export type JobResult<T> = { success: boolean; data?: T; error?: string };
 

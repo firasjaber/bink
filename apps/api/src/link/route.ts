@@ -1,22 +1,18 @@
-import Elysia, { t } from "elysia";
-import { drizzle } from "..";
-import { getUserIdFromSession, validateSession } from "../auth";
-import { LinkStateEnum } from "db/src/schema";
-import { insertLinkSchema } from "db/src/zod.schema";
-import {
-  isURLReachable,
-  extractTextFromNotes,
-  convertTextToEmbeddings,
-} from "./helper";
-import * as queries from "db/src/queries";
-import { logger } from "@bogeychan/elysia-logger";
+import Elysia, { t } from 'elysia';
+import { drizzle } from '..';
+import { getUserIdFromSession, validateSession } from '../auth';
+import { LinkStateEnum } from 'db/src/schema';
+import { insertLinkSchema } from 'db/src/zod.schema';
+import { isURLReachable, extractTextFromNotes, convertTextToEmbeddings } from './helper';
+import * as queries from 'db/src/queries';
+import { logger } from '@bogeychan/elysia-logger';
 
-export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
+export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
   {
     async beforeHandle({ headers, error }) {
-      const isValidSession = await validateSession(headers.cookie ?? "");
+      const isValidSession = await validateSession(headers.cookie ?? '');
       if (!isValidSession) {
-        throw error("Unauthorized", "Invalid session");
+        throw error('Unauthorized', 'Invalid session');
       }
     },
   },
@@ -24,17 +20,17 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
     app
       .resolve(async ({ headers }) => {
         return {
-          userId: await getUserIdFromSession(headers.cookie ?? ""),
+          userId: await getUserIdFromSession(headers.cookie ?? ''),
         };
       })
       .get(
-        "",
+        '',
         async ({ query, userId, set, log }) => {
-          log.info("get links");
+          log.info('get links');
           if (userId === null) {
             set.status = 401;
             return {
-              error: "Unauthorized",
+              error: 'Unauthorized',
             };
           }
           try {
@@ -50,7 +46,7 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
                   embedding,
                   limit,
                   cursor,
-                  query.search
+                  query.search,
                 );
               total = resultTotal;
               links = resultLinks;
@@ -61,7 +57,7 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
                   userId,
                   limit,
                   query.search,
-                  cursor
+                  cursor,
                 );
               total = resultTotal;
               links = resultLinks;
@@ -88,10 +84,10 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
               total: total[0].count,
             };
           } catch (error) {
-            log.error(error, "Error getting links");
+            log.error(error, 'Error getting links');
             set.status = 500;
             return {
-              error: "Internal Server Error",
+              error: 'Internal Server Error',
             };
           }
         },
@@ -102,19 +98,19 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
             search: t.Optional(t.String()),
             smartSearch: t.Optional(t.Boolean()),
           }),
-        }
+        },
       )
       .get(
-        "/:id",
+        '/:id',
         async ({ userId, params: { id }, error }) => {
           if (!userId) {
-            throw error("Unauthorized", "Invalid session");
+            throw error('Unauthorized', 'Invalid session');
           }
 
           const link = await queries.link.selectLinkById(drizzle, id, userId);
 
           if (!link) {
-            throw error("Not Found", "Link not found");
+            throw error('Not Found', 'Link not found');
           }
 
           return { data: link };
@@ -123,14 +119,14 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
           params: t.Object({
             id: t.String(),
           }),
-        }
+        },
       )
       .post(
-        "",
+        '',
         async ({ userId, body, error }) => {
           // validate the url
           if (!(await isURLReachable(body.url))) {
-            throw error("Bad Request", "Invalid URL");
+            throw error('Bad Request', 'Invalid URL');
           }
 
           const link = insertLinkSchema.parse({
@@ -142,7 +138,7 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
           const dbLink = await queries.link.insertLink(drizzle, link);
 
           const job = {
-            event: "scrape_og" as const,
+            event: 'scrape_og' as const,
             url: link.url,
             linkId: dbLink.id,
             priority: 1,
@@ -151,56 +147,56 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
           // add the srapeOg job to the queue
           await queries.scrapingJobs.insertScrapingJob(drizzle, job);
 
-          return { status: "success", message: "Link created" };
+          return { status: 'success', message: 'Link created' };
         },
         {
           body: t.Object({
             url: t.String(),
           }),
-        }
+        },
       )
       .delete(
-        "/:id",
+        '/:id',
         async ({ userId, params: { id }, error }) => {
           if (!userId) {
-            throw error("Unauthorized", "Invalid session");
+            throw error('Unauthorized', 'Invalid session');
           }
 
           const link = await queries.link.selectLinkById(drizzle, id, userId);
 
           if (!link) {
-            throw error("Not Found", "Link not found");
+            throw error('Not Found', 'Link not found');
           }
 
           if (link.userId !== userId) {
-            throw error("Forbidden", "You are not allowed to delete this link");
+            throw error('Forbidden', 'You are not allowed to delete this link');
           }
 
           await queries.link.deleteLink(drizzle, id);
 
-          return { status: "success", message: "Link deleted" };
+          return { status: 'success', message: 'Link deleted' };
         },
         {
           params: t.Object({
             id: t.String(),
           }),
-        }
+        },
       )
       .put(
-        "/:id",
+        '/:id',
         async ({ userId, params: { id }, body, error }) => {
           if (!userId) {
-            throw error("Unauthorized", "Invalid session");
+            throw error('Unauthorized', 'Invalid session');
           }
 
           const link = await queries.link.selectLinkById(drizzle, id, userId);
 
           if (!link) {
-            throw error("Not Found", "Link not found");
+            throw error('Not Found', 'Link not found');
           }
 
           if (link.userId !== userId) {
-            throw error("Forbidden", "You are not allowed to update this link");
+            throw error('Forbidden', 'You are not allowed to update this link');
           }
 
           await queries.link.updateLink(drizzle, id, {
@@ -209,12 +205,10 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
             image: body.image ?? undefined,
             url: body.url ?? undefined,
             notes: body.notes ?? undefined,
-            notesText: body.notes
-              ? extractTextFromNotes(JSON.parse(body.notes))
-              : undefined,
+            notesText: body.notes ? extractTextFromNotes(JSON.parse(body.notes)) : undefined,
           });
 
-          return { status: "success", message: "Link updated" };
+          return { status: 'success', message: 'Link updated' };
         },
         {
           body: t.Object({
@@ -227,45 +221,38 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
           params: t.Object({
             id: t.String(),
           }),
-        }
+        },
       )
-      .get("/:id/tags", async ({ params: { id } }) => {
+      .get('/:id/tags', async ({ params: { id } }) => {
         const linkTags = await queries.link.selectLinkTags(drizzle, id);
         if (linkTags.length === 0) {
-          const allSystemTags =
-            await queries.link.selectAllSystemLinkTags(drizzle);
+          const allSystemTags = await queries.link.selectAllSystemLinkTags(drizzle);
           return { data: { linkTags: [], otherAvailableTags: allSystemTags } };
         }
 
-        const otherAvailableTags =
-          await queries.link.selectLinkOtherAvailableTagsByLinkIds(
-            drizzle,
-            linkTags.map((tag) => tag.link_tag.id)
-          );
+        const otherAvailableTags = await queries.link.selectLinkOtherAvailableTagsByLinkIds(
+          drizzle,
+          linkTags.map((tag) => tag.link_tag.id),
+        );
 
         return {
           data: { linkTags: linkTags, otherAvailableTags: otherAvailableTags },
         };
       })
       .put(
-        "/:id/tags",
+        '/:id/tags',
         async ({ userId, params: { id }, body, error }) => {
           if (!userId) {
-            throw error("Unauthorized", "Invalid session");
+            throw error('Unauthorized', 'Invalid session');
           }
 
           try {
-            await queries.link.deleteLinkTagsByLinkId(
-              drizzle,
-              id,
-              userId,
-              body.tags
-            );
+            await queries.link.deleteLinkTagsByLinkId(drizzle, id, userId, body.tags);
           } catch (_) {
-            throw error("Not Found", "Link not found");
+            throw error('Not Found', 'Link not found');
           }
 
-          return { status: "success", message: "Link tags updated" };
+          return { status: 'success', message: 'Link tags updated' };
         },
         {
           body: t.Object({
@@ -274,36 +261,29 @@ export const links = new Elysia({ prefix: "/links" }).use(logger()).guard(
                 id: t.Optional(t.String()),
                 name: t.String(),
                 color: t.String(),
-              })
+              }),
             ),
           }),
-        }
+        },
       )
-      .put("/embeddings", async ({ userId, set, error, log }) => {
+      .put('/embeddings', async ({ userId, set, error, log }) => {
         try {
           if (!userId) {
-            throw error("Unauthorized", "Invalid session");
+            throw error('Unauthorized', 'Invalid session');
           }
           // Get all the users links with the embeddings not set
-          const links = await queries.link.selectLinksByUserIdWithoutEmbedding(
-            drizzle,
-            userId
-          );
+          const links = await queries.link.selectLinksByUserIdWithoutEmbedding(drizzle, userId);
           for (const link of links) {
             const embeddings = await convertTextToEmbeddings(
-              link.title + " " + link.description + " " + link.notesText
+              link.title + ' ' + link.description + ' ' + link.notesText,
             );
-            await queries.link.updateLinkEmbedding(
-              drizzle,
-              link.id,
-              embeddings
-            );
+            await queries.link.updateLinkEmbedding(drizzle, link.id, embeddings);
           }
-          return { status: "success", message: "Embeddings updated" };
+          return { status: 'success', message: 'Embeddings updated' };
         } catch (error) {
-          log.error(error, "Error updating embeddings");
+          log.error(error, 'Error updating embeddings');
           set.status = 500;
-          return { status: "error", message: "Failed to update embeddings" };
+          return { status: 'error', message: 'Failed to update embeddings' };
         }
-      })
+      }),
 );

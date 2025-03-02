@@ -1,21 +1,21 @@
-import Elysia from "elysia";
-import { generateGoogleAuthUrl, oauth2Client } from "../oauth/google";
-import { drizzle } from "..";
-import { lucia } from "../lucia";
-import * as queries from "db/src/queries";
-import { logger } from "@bogeychan/elysia-logger";
+import Elysia from 'elysia';
+import { generateGoogleAuthUrl, oauth2Client } from '../oauth/google';
+import { drizzle } from '..';
+import { lucia } from '../lucia';
+import * as queries from 'db/src/queries';
+import { logger } from '@bogeychan/elysia-logger';
 
-export const googleAuth = new Elysia({ prefix: "/auth/google" })
+export const googleAuth = new Elysia({ prefix: '/auth/google' })
   .use(logger())
-  .get("/", async () => {
+  .get('/', async () => {
     const url = generateGoogleAuthUrl();
     return { url };
   })
-  .get("/callback", async ({ query, error, set, log }) => {
+  .get('/callback', async ({ query, error, set, log }) => {
     const { code } = query;
 
     if (!code) {
-      throw error(400, "Authorization code required");
+      throw error(400, 'Authorization code required');
     }
 
     try {
@@ -30,7 +30,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
         family_name: string;
         picture: string;
       }>({
-        url: "https://www.googleapis.com/oauth2/v2/userinfo",
+        url: 'https://www.googleapis.com/oauth2/v2/userinfo',
       });
 
       const {
@@ -42,10 +42,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
       } = userinfo.data;
 
       // Check if user exists
-      const existingUser = await queries.user.selectUserByGoogleId(
-        drizzle,
-        googleId
-      );
+      const existingUser = await queries.user.selectUserByGoogleId(drizzle, googleId);
 
       let userId: string;
 
@@ -60,7 +57,7 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
         });
 
         if (!newUser) {
-          throw error("Internal Server Error", "Failed to create user");
+          throw error('Internal Server Error', 'Failed to create user');
         }
 
         userId = newUser.id;
@@ -71,13 +68,13 @@ export const googleAuth = new Elysia({ prefix: "/auth/google" })
       // Create session
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      set.headers["Set-Cookie"] = sessionCookie.serialize();
+      set.headers['Set-Cookie'] = sessionCookie.serialize();
 
       return {
         email,
       };
     } catch (error) {
-      log.error(error, "Error occured whilehandling google auth callback");
+      log.error(error, 'Error occured whilehandling google auth callback');
       set.status = 500;
     }
   });

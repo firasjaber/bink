@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   pgEnum,
@@ -12,142 +12,122 @@ import {
   jsonb,
   index,
   vector,
-} from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import type { z } from "zod";
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import type { z } from 'zod';
 
-export const userTable = pgTable("user", {
-  id: uuid("id")
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  firstName: varchar("first_name").notNull(),
-  lastName: varchar("last_name").notNull(),
-  email: varchar("email").notNull(),
-  password: text("password"),
-  googleId: varchar("google_id"),
-  profilePicture: text("profile_picture"),
-  createdAt: timestamp("created_at", {
+export const userTable = pgTable('user', {
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  firstName: varchar('first_name').notNull(),
+  lastName: varchar('last_name').notNull(),
+  email: varchar('email').notNull(),
+  password: text('password'),
+  googleId: varchar('google_id'),
+  profilePicture: text('profile_picture'),
+  createdAt: timestamp('created_at', {
     withTimezone: true,
-    mode: "date",
+    mode: 'date',
   })
     .defaultNow()
     .notNull(),
 });
 
-export const sessionTable = pgTable("session", {
-  id: text("id").primaryKey(),
-  userId: uuid("user_id")
+export const sessionTable = pgTable('session', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id')
     .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
-  expiresAt: timestamp("expires_at", {
+    .references(() => userTable.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', {
     withTimezone: true,
-    mode: "date",
+    mode: 'date',
   }).notNull(),
 });
 
-export const linkTagTable = pgTable("link_tag", {
-  id: uuid("id")
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  name: text("name").notNull(),
-  color: text("color").notNull(),
+export const linkTagTable = pgTable('link_tag', {
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  name: text('name').notNull(),
+  color: text('color').notNull(),
   // some tags are created by the user, some are created by the system
-  isSystem: boolean("is_system").notNull(),
+  isSystem: boolean('is_system').notNull(),
   // user id should be nullable if the tag is system
-  userId: uuid("user_id").references(() => userTable.id, {
-    onDelete: "cascade",
+  userId: uuid('user_id').references(() => userTable.id, {
+    onDelete: 'cascade',
   }),
 });
 
 // link state enum
-export const linkStateEnum = pgEnum("link_state", [
-  "processing",
-  "processed",
-  "failed",
-]);
+export const linkStateEnum = pgEnum('link_state', ['processing', 'processed', 'failed']);
 
 export const LinkStateEnum = {
-  PROCESSING: "processing",
-  PROCESSED: "processed",
-  FAILED: "failed",
+  PROCESSING: 'processing',
+  PROCESSED: 'processed',
+  FAILED: 'failed',
 } as const;
 
 export const linkTable = pgTable(
-  "link",
+  'link',
   {
-    id: uuid("id")
-      .default(sql`gen_random_uuid()`)
-      .primaryKey(),
-    url: text("url").notNull(),
-    title: text("title"),
-    description: text("description"),
-    image: text("image"),
-    state: linkStateEnum("state").notNull(),
-    notes: jsonb("notes"),
-    notesText: text("notes_text"),
-    embedding: vector("embedding", { dimensions: 768 }),
-    userId: uuid("user_id")
+    id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+    url: text('url').notNull(),
+    title: text('title'),
+    description: text('description'),
+    image: text('image'),
+    state: linkStateEnum('state').notNull(),
+    notes: jsonb('notes'),
+    notesText: text('notes_text'),
+    embedding: vector('embedding', { dimensions: 768 }),
+    userId: uuid('user_id')
       .notNull()
-      .references(() => userTable.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at", {
+      .references(() => userTable.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', {
       withTimezone: true,
-      mode: "date",
+      mode: 'date',
     })
       .defaultNow()
       .notNull(),
   },
   (table) => ({
-    searchIndex: index("search_index").using(
-      "gin",
+    searchIndex: index('search_index').using(
+      'gin',
       sql`(
           setweight(to_tsvector('english', ${table.title}), 'A') ||
           setweight(to_tsvector('english', ${table.description}), 'B') ||
           setweight(to_tsvector('english', ${table.notesText}), 'C')
-      )`
+      )`,
     ),
-    embeddingIndex: index("embeddingIndex").using(
-      "hnsw",
-      table.embedding.op("vector_cosine_ops")
-    ),
-  })
+    embeddingIndex: index('embeddingIndex').using('hnsw', table.embedding.op('vector_cosine_ops')),
+  }),
 );
 
 export const linkTagsToLinks = pgTable(
-  "link_tags_to_links",
+  'link_tags_to_links',
   {
-    linkId: uuid("link_id")
+    linkId: uuid('link_id')
       .notNull()
       .references(() => linkTable.id),
-    tagId: uuid("tag_id")
+    tagId: uuid('tag_id')
       .notNull()
       .references(() => linkTagTable.id),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.linkId, t.tagId] }),
-  })
+  }),
 );
 
-export const statusEnum = pgEnum("status", [
-  "pending",
-  "processing",
-  "completed",
-  "failed",
-]);
-export const eventEnum = pgEnum("event", ["scrape_og"]); // Add more event types here as needed
+export const statusEnum = pgEnum('status', ['pending', 'processing', 'completed', 'failed']);
+export const eventEnum = pgEnum('event', ['scrape_og']); // Add more event types here as needed
 
-export const scrapingJobs = pgTable("scraping_jobs", {
-  id: uuid("id")
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
-  url: text("url").notNull(),
-  status: statusEnum("status").notNull().default("pending"),
-  event: eventEnum("event").notNull(),
-  priority: integer("priority").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  lockedAt: timestamp("locked_at"),
-  linkId: uuid("link_id")
-    .references(() => linkTable.id, { onDelete: "cascade" })
+export const scrapingJobs = pgTable('scraping_jobs', {
+  id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
+  url: text('url').notNull(),
+  status: statusEnum('status').notNull().default('pending'),
+  event: eventEnum('event').notNull(),
+  priority: integer('priority').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  lockedAt: timestamp('locked_at'),
+  linkId: uuid('link_id')
+    .references(() => linkTable.id, { onDelete: 'cascade' })
     .notNull(),
 });
 

@@ -1,10 +1,10 @@
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import "../App.css";
-import { type AuthState, useAuthStore } from "@/stores/auth";
-import { Navbar } from "@/components/Navbar";
-import { useEffect } from "react";
-import { FullScreenLoading } from "@/components/ui/full-screen-loading";
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
+import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import '../App.css';
+import { type AuthState, useAuthStore } from '@/stores/auth';
+import { Navbar } from '@/components/Navbar';
+import { useEffect } from 'react';
+import { FullScreenLoading } from '@/components/ui/full-screen-loading';
 
 export interface RouterContext {
   auth: AuthState;
