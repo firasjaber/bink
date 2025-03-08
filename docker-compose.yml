@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "3000:3000"
+    env_file:
+      - apps/api/.env
+    depends_on:
+      - bink-db
+    networks:
+      - bink-network
+
+  ranj:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ranj
+    env_file:
+      - apps/ranj/.env
+    depends_on:
+      - bink-db
+    networks:
+      - bink-network
+
+  client:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    ports:
+      - "80:80"
+    networks:
+      - bink-network
+
+  bink-db:
+    container_name: bink-db
+    image: ankane/pgvector:v0.5.1
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
+    volumes:
+      - bink-db:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - bink-network
+
+volumes:
+  bink-db:
+    name: bink-db
+
+networks:
+  bink-network:
+    name: bink-network

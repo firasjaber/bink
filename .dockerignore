@@ -1,0 +1,12 @@
+node_modules
+.git
+.env
+**/dist
+**/build
+**/.turbo
+**/.next
+**/.nuxt
+**/.output
+**/.cache
+**/.env.*
+!.env.example 
