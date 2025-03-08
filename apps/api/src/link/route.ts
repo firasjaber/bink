@@ -1,11 +1,11 @@
+import { logger } from '@bogeychan/elysia-logger';
+import * as queries from 'db/src/queries';
+import { LinkStateEnum } from 'db/src/schema';
+import { insertLinkSchema } from 'db/src/zod.schema';
 import Elysia, { t } from 'elysia';
 import { drizzle } from '..';
 import { getUserIdFromSession, validateSession } from '../auth';
-import { LinkStateEnum } from 'db/src/schema';
-import { insertLinkSchema } from 'db/src/zod.schema';
-import { isURLReachable, extractTextFromNotes, convertTextToEmbeddings } from './helper';
-import * as queries from 'db/src/queries';
-import { logger } from '@bogeychan/elysia-logger';
+import { convertTextToEmbeddings, extractTextFromNotes, isURLReachable } from './helper';
 
 export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
   {
@@ -66,7 +66,7 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
             // Transform the response to handle null tags
             const transformedLinks = links.map((link) => ({
               ...link,
-              tags: link.tags?.[0] === null ? [] : link.tags ?? [],
+              tags: link.tags?.[0] === null ? [] : (link.tags ?? []),
             }));
 
             // Check if there are more results

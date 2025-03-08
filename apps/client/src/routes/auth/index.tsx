@@ -1,11 +1,11 @@
-import { redirect, createFileRoute } from '@tanstack/react-router';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
-import { toast, Toaster } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,11 +17,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useMutation } from '@tanstack/react-query';
-import { signIn, signUp, getGoogleAuthUrl } from '@/eden';
-import { useAuthStore } from '@/stores/auth';
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
+import { Input } from '@/components/ui/input';
+import { getGoogleAuthUrl, signIn, signUp } from '@/eden';
+import { useAuthStore } from '@/stores/auth';
+import { useMutation } from '@tanstack/react-query';
 
 export const Route = createFileRoute('/auth/')({
   component: Auth,

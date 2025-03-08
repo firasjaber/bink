@@ -1,11 +1,9 @@
-import { useAuthStore } from './stores/auth';
-import { StrictMode } from 'react';
-import ReactDOM from 'react-dom/client';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { AuthState, useAuthStore } from './stores/auth';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Import the generated route tree
 import { routeTree } from './routeTree.gen';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a new query client
 const queryClient = new QueryClient();
@@ -15,7 +13,11 @@ export const router = createRouter({
   routeTree,
   context: {
     queryClient,
-    auth: undefined,
+    auth: {
+      user: null,
+      isLoading: true,
+      isAuth: false,
+    } as AuthState,
   },
   defaultPreload: 'intent',
   // Since we're using React Query, we don't want loader calls to ever be stale

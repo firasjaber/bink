@@ -1,18 +1,18 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router';
-import { useState } from 'react';
-import { Search, ExternalLink, Edit, Sparkles } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { AddLink } from '@/components/addLink';
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useDebounce } from '@/hooks/useDebounce';
-import { getLinks, updateLinkEmbeddings } from '@/eden';
+import { FullScreenLoading } from '@/components/ui/full-screen-loading';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getLinks, updateLinkEmbeddings } from '@/eden';
+import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
-import { FullScreenLoading } from '@/components/ui/full-screen-loading';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute, redirect } from '@tanstack/react-router';
+import { Edit, ExternalLink, Search, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/')({
   component: Index,

@@ -1,11 +1,17 @@
-import type { JSONContent } from 'novel';
 import { treaty } from '@elysiajs/eden';
+import type { JSONContent } from 'novel';
 import type { App } from '../../api/src';
+import { redirectToAuth } from './lib/navigation';
 
 const client = treaty<App>('localhost:3000', {
   fetch: {
     credentials: 'include',
     mode: 'cors',
+  },
+  onResponse(response) {
+    if (response.status === 401) {
+      redirectToAuth();
+    }
   },
 });
 
