@@ -1,8 +1,8 @@
+import * as queries from 'db/src/queries';
 import { type ScrapingJob } from 'db/src/schema';
 import { db } from './index';
-import { getJobHandler } from './registry';
-import * as queries from 'db/src/queries';
 import { logger } from './logger';
+import { getJobHandler } from './registry';
 
 const BATCH_SIZE = 10;
 

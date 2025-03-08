@@ -1,6 +1,6 @@
 import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
-import { Lucia } from 'lucia';
 import { initDrizzle, sessionTable, userTable } from 'db';
+import { Lucia } from 'lucia';
 import { config } from './config';
 
 const drizzle = await initDrizzle(config.DATABASE_URL);

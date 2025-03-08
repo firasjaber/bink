@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
 import {
-  EditorRoot,
-  EditorCommand,
-  EditorCommandItem,
-  EditorCommandEmpty,
-  EditorContent,
-  type JSONContent,
-  EditorCommandList,
   EditorBubble,
+  EditorCommand,
+  EditorCommandEmpty,
+  EditorCommandItem,
+  EditorCommandList,
+  EditorContent,
+  EditorRoot,
+  type JSONContent,
 } from 'novel';
 import { ImageResizer, handleCommandNavigation } from 'novel';
+import React, { useEffect, useState } from 'react';
 import { defaultExtensions } from './extensions';
-import { NodeSelector } from './selectors/NodeSelector';
-import { LinkSelector } from './selectors/LinkSelector';
 import { ColorSelector } from './selectors/ColorSelector';
+import { LinkSelector } from './selectors/LinkSelector';
+import { NodeSelector } from './selectors/NodeSelector';
 
-import { TextButtons } from './selectors/TextButtons';
-import { slashCommand, suggestionItems } from './SlashCommand';
 import { Separator } from '@/components/ui/separator';
+import { slashCommand, suggestionItems } from './SlashCommand';
+import { TextButtons } from './selectors/TextButtons';
 
 const extensions = [...defaultExtensions, slashCommand];
 

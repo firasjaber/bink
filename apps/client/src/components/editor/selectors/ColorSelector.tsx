@@ -1,8 +1,8 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { EditorBubbleItem, useEditor } from 'novel';
 
-import { PopoverTrigger, Popover, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export interface BubbleColorMenuItem {
   name: string;

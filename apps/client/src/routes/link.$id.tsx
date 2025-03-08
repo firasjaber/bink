@@ -1,36 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState, useRef } from 'react';
-import {
-  Pencil,
-  Plus,
-  X,
-  ExternalLink,
-  Trash2,
-  Save,
-  ArrowLeft,
-  EarthIcon,
-  Check,
-  Loader2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import NoteEditor from '@/components/editor/Editor';
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-  AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteLink, getLink, updateLink, getLinkTags, updateLinkTags } from '../eden';
-import { toast, Toaster } from 'sonner';
-import { cn, debounce } from '@/lib/utils';
-import NoteEditor from '@/components/editor/Editor';
-import type { JSONContent } from 'novel';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { cn, debounce } from '@/lib/utils';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import {
+  ArrowLeft,
+  Check,
+  EarthIcon,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from 'lucide-react';
+import type { JSONContent } from 'novel';
+import { useEffect, useRef, useState } from 'react';
+import { Toaster, toast } from 'sonner';
+import { deleteLink, getLink, getLinkTags, updateLink, updateLinkTags } from '../eden';
 
 export const Route = createFileRoute('/link/$id')({
   component: Page,

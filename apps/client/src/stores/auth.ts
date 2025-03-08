@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import { getLoggedInUser, logout } from '@/eden';
+import { create } from 'zustand';
 
 export interface AuthState {
   isAuth: boolean;

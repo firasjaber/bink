@@ -1,6 +1,6 @@
-import { userTable } from '../schema';
-import { initDrizzle } from '../client';
 import { eq } from 'drizzle-orm';
+import { initDrizzle } from '../client';
+import { userTable } from '../schema';
 
 export async function selectUserByEmail(
   db: Awaited<ReturnType<typeof initDrizzle>>,

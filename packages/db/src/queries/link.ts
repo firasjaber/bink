@@ -1,17 +1,6 @@
+import { and, cosineDistance, count, desc, eq, gt, isNull, notInArray, sql } from 'drizzle-orm';
 import { initDrizzle } from '../client';
-import {
-  eq,
-  and,
-  isNull,
-  desc,
-  asc,
-  notInArray,
-  sql,
-  count,
-  cosineDistance,
-  gt,
-} from 'drizzle-orm';
-import { linkTable, linkTagsToLinks, linkTagTable } from '../schema';
+import { linkTable, linkTagTable, linkTagsToLinks } from '../schema';
 
 export async function selectLinksByUserId(
   db: Awaited<ReturnType<typeof initDrizzle>>,

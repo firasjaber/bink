@@ -1,6 +1,9 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  index,
+  integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -8,9 +11,6 @@ import {
   timestamp,
   uuid,
   varchar,
-  integer,
-  jsonb,
-  index,
   vector,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';

@@ -1,5 +1,5 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
 import { googleAuthCallback } from '@/eden';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/auth/callback')({
   loader: async () => {

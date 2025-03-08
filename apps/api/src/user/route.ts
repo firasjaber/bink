@@ -1,9 +1,9 @@
-import Elysia, { error, t } from 'elysia';
-import { lucia } from '../lucia';
-import { drizzle } from '..';
 import argon from 'argon2';
-import { getUserIdFromSession, validateSession } from '../auth';
 import * as queries from 'db/src/queries';
+import Elysia, { error, t } from 'elysia';
+import { drizzle } from '..';
+import { getUserIdFromSession, validateSession } from '../auth';
+import { lucia } from '../lucia';
 
 export const users = new Elysia({ prefix: '/users' })
   .post(

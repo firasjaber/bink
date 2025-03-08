@@ -1,9 +1,9 @@
-import { cn } from '@/lib/utils';
-import { useEditor } from 'novel';
-import { Check, Trash } from 'lucide-react';
-import { type Dispatch, type FC, type SetStateAction, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { PopoverContent, Popover, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Check, Trash } from 'lucide-react';
+import { useEditor } from 'novel';
+import { type Dispatch, type FC, type SetStateAction, useEffect, useRef } from 'react';
 
 export function isValidUrl(url: string) {
   try {
