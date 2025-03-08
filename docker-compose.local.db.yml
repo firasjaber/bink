@@ -1,0 +1,18 @@
+version: "3.8"
+
+volumes:
+  bink-db-pgvector-local:
+    name: bink-db-pgvector-local
+
+services:
+  bink-db-pgvector:
+    container_name: bink-db-pgvector
+    image: ankane/pgvector:v0.5.1
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-db}
+    volumes:
+      - bink-db-pgvector-local:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
