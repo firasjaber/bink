@@ -1,6 +1,6 @@
+import { hash } from '@node-rs/argon2';
 import { initDrizzle } from '../src/client';
 import { LinkStateEnum, linkTable, linkTagTable, scrapingJobs, userTable } from '../src/schema';
-import { hash } from '@node-rs/argon2';
 
 async function seed() {
   const db = await initDrizzle('postgres://user:password@localhost:5433/db');

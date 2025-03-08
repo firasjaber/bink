@@ -1,6 +1,6 @@
-import { scrapingJobs } from '../schema';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { initDrizzle } from '../client';
-import { eq, and, isNull, desc, asc, inArray } from 'drizzle-orm';
+import { scrapingJobs } from '../schema';
 
 export async function getPendingJobs(db: Awaited<ReturnType<typeof initDrizzle>>, limit: number) {
   return db

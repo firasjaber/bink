@@ -1,14 +1,14 @@
-import { Elysia } from 'elysia';
-import { users } from './user/route';
+import { logger } from '@bogeychan/elysia-logger';
 import cors from '@elysiajs/cors';
 import { initDrizzle } from 'db';
-import { links } from './link/route';
+import { Elysia } from 'elysia';
 import { googleAuth } from './auth/google.route';
 import { config } from './config';
-import { logger } from '@bogeychan/elysia-logger';
+import { links } from './link/route';
 import { logger as mainLogger } from './logger';
+import { users } from './user/route';
 
-export const drizzle = await initDrizzle(config.DATABASE_URL);
+const drizzle = await initDrizzle(config.DATABASE_URL);
 mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
@@ -33,3 +33,4 @@ const app = new Elysia()
 mainLogger.info(`🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`);
 
 export type App = typeof app;
+export { drizzle };

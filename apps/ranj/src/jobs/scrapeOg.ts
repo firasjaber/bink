@@ -1,10 +1,10 @@
-import type { JobHandler, JobResult, LinkData } from '../types';
-import { LinkStateEnum, linkTable, type ScrapingJob } from 'db/src/schema';
-import ogs from 'open-graph-scraper';
-import { LinkDataSchema } from '../types';
-import { db } from '..';
 import * as queries from 'db/src/queries';
+import { LinkStateEnum, type ScrapingJob, linkTable } from 'db/src/schema';
+import ogs from 'open-graph-scraper';
+import { db } from '..';
 import { logger } from '../logger';
+import type { JobHandler, JobResult, LinkData } from '../types';
+import { LinkDataSchema } from '../types';
 
 export const scrapeOgHandler: JobHandler<LinkData> = {
   async execute(job: ScrapingJob): Promise<JobResult<LinkData>> {

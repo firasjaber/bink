@@ -1,9 +1,9 @@
+import { logger } from '@bogeychan/elysia-logger';
+import * as queries from 'db/src/queries';
 import Elysia from 'elysia';
-import { generateGoogleAuthUrl, oauth2Client } from '../oauth/google';
 import { drizzle } from '..';
 import { lucia } from '../lucia';
-import * as queries from 'db/src/queries';
-import { logger } from '@bogeychan/elysia-logger';
+import { generateGoogleAuthUrl, oauth2Client } from '../oauth/google';
 
 export const googleAuth = new Elysia({ prefix: '/auth/google' })
   .use(logger())

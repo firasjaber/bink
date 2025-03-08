@@ -1,5 +1,5 @@
-import type { JobHandler, LinkData } from './types';
 import { scrapeOgHandler } from './jobs/scrapeOg';
+import type { JobHandler, LinkData } from './types';
 
 type JobReturns = LinkData;
 
