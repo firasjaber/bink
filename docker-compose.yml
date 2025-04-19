@@ -11,6 +11,10 @@ services:
       - apps/api/.env
     depends_on:
       - bink-db
+    logging:
+      driver: "fluentd"
+      options:
+        tag: "123123"
     networks:
       - bink-network
 
@@ -54,4 +58,4 @@ volumes:
 
 networks:
   bink-network:
-    name: bink-network
+    external: true

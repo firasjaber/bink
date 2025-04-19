@@ -1,5 +1,5 @@
-import { logger } from '@bogeychan/elysia-logger';
 import cors from '@elysiajs/cors';
+import { logger } from '@bogeychan/elysia-logger';
 import { initDrizzle } from 'db';
 import { Elysia } from 'elysia';
 import { googleAuth } from './auth/google.route';
@@ -12,11 +12,10 @@ const drizzle = await initDrizzle(config.DATABASE_URL);
 mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
-  .use(
-    logger({
-      level: 'info',
-    }),
-  )
+  .use(logger({ level: 'trace' }))
+  .onTransform(({ body, log }) => {
+    log.trace({ request: body }, 'Request body');
+  })
   .use(
     cors({
       origin: true,
@@ -31,6 +30,18 @@ const app = new Elysia()
   .listen(config.PORT);
 
 mainLogger.info(`🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`);
+// test log with nested objects
+mainLogger.info(
+  {
+    user: {
+      id: 1,
+      name: 'John Doe',
+      links: { id: 1, url: 'https://example.com' },
+    },
+    projectId: '123123',
+  },
+  'user links',
+);
 
 export type App = typeof app;
 export { drizzle };
