@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   api:
+    container_name: api
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -14,11 +15,12 @@ services:
     logging:
       driver: "fluentd"
       options:
-        tag: "123123"
+        tag: "docker.{{.Name}}"
     networks:
       - bink-network
 
   ranj:
+    container_name: ranj
     build:
       context: .
       dockerfile: docker/Dockerfile.ranj
@@ -26,10 +28,15 @@ services:
       - apps/ranj/.env
     depends_on:
       - bink-db
+    logging:
+      driver: "fluentd"
+      options:
+        tag: "docker.{{.Name}}"
     networks:
       - bink-network
 
   client:
+    container_name: client
     build:
       context: .
       dockerfile: docker/Dockerfile.client
