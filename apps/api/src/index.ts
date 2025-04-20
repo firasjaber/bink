@@ -2,20 +2,24 @@ import cors from '@elysiajs/cors';
 import { logger } from '@bogeychan/elysia-logger';
 import { initDrizzle } from 'db';
 import { Elysia } from 'elysia';
+import { initLucia } from './lucia';
 import { googleAuth } from './auth/google.route';
 import { config } from './config';
 import { links } from './link/route';
 import { logger as mainLogger } from './logger';
 import { users } from './user/route';
 
+mainLogger.info('Connecting to database...');
 const drizzle = await initDrizzle(config.DATABASE_URL);
+const lucia = initLucia(drizzle);
+
 mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
   .use(logger({ level: 'trace' }))
-  .onTransform(({ body, log }) => {
-    log.trace({ request: body }, 'Request body');
-  })
+  // .onTransform(({ body, log }) => {
+  //   log.trace({ request: body }, 'Request body');
+  // })
   .use(
     cors({
       origin: true,
@@ -44,4 +48,4 @@ mainLogger.info(
 );
 
 export type App = typeof app;
-export { drizzle };
+export { drizzle, lucia };
