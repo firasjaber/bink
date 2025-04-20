@@ -3,7 +3,7 @@ import type { JSONContent } from 'novel';
 import type { App } from '../../api/src';
 import { redirectToAuth } from './lib/navigation';
 
-const client = treaty<App>('localhost:3000', {
+const client = treaty<App>('http://localhost:3000', {
   fetch: {
     credentials: 'include',
     mode: 'cors',
