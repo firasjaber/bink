@@ -24,6 +24,12 @@ const configSchema = z.object({
 
   /** Frontend URL */
   FRONTEND_URL: z.string().url(),
+
+  /** OpenTelemetry OTLP endpoint */
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url(),
+
+  /** OpenTelemetry OTLP API key */
+  OTEL_EXPORTER_OTLP_API_KEY: z.string().min(1),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -38,6 +44,8 @@ function validateEnvConfig(env: NodeJS.ProcessEnv): Config {
     GOOGLE_REDIRECT_URI: env.GOOGLE_REDIRECT_URI,
     FRONTEND_URL: env.FRONTEND_URL,
     DATABASE_URL: env.DATABASE_URL,
+    OTEL_EXPORTER_OTLP_ENDPOINT: env.OTEL_EXPORTER_OTLP_ENDPOINT,
+    OTEL_EXPORTER_OTLP_API_KEY: env.OTEL_EXPORTER_OTLP_API_KEY,
   });
 
   if (!result.success) {

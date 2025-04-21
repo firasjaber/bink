@@ -1,7 +1,7 @@
 import argon from 'argon2';
 import * as queries from 'db/src/queries';
 import Elysia, { error, t } from 'elysia';
-import { lucia, drizzle } from '..';
+import { lucia, drizzle } from '../index';
 import { getUserIdFromSession, validateSession } from '../auth';
 
 export const users = new Elysia({ prefix: '/users' })
