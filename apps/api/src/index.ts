@@ -1,3 +1,5 @@
+import { instrumentation } from './instrumentation';
+
 import cors from '@elysiajs/cors';
 import { logger } from '@bogeychan/elysia-logger';
 import { initDrizzle } from 'db';
@@ -17,7 +19,7 @@ mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
   .use(logger({ level: 'trace' }))
-  // .onTransform(({ body, log }) => {
+  .use(instrumentation) // .onTransform(({ body, log }) => {
   //   log.trace({ request: body }, 'Request body');
   // })
   .use(

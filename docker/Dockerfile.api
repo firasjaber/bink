@@ -25,4 +25,4 @@ COPY apps/api/src ./apps/api/src
 # run the app
 USER bun
 WORKDIR /app/apps/api
-ENTRYPOINT [ "bun", "start" ]
+ENTRYPOINT [ "bun", "--preload", "./src/instrumentation.ts", "start" ]
