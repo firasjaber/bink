@@ -1,15 +1,5 @@
-# bink
+# (WIP) Bink - simple, yet effective bookmarks management app
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.1.18. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+**NOTE**: this is still work on progress
+## About
+Bink is a personal bookmarks management app, with simple and effective tagging and search powered by AI.
