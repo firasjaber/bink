@@ -19,9 +19,7 @@ mainLogger.info('🐘 Database connected');
 
 const app = new Elysia()
   .use(logger({ level: 'trace' }))
-  .use(instrumentation) // .onTransform(({ body, log }) => {
-  //   log.trace({ request: body }, 'Request body');
-  // })
+  .use(instrumentation)
   .use(
     cors({
       origin: true,
