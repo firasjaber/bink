@@ -232,7 +232,7 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
 
         const otherAvailableTags = await queries.link.selectLinkOtherAvailableTagsByLinkIds(
           drizzle,
-          linkTags.map((tag) => tag.link_tag.id),
+          linkTags.map((tag) => tag.id),
         );
 
         return {

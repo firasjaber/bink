@@ -6,12 +6,12 @@ async function seed() {
   const db = await initDrizzle('postgres://user:password@localhost:5433/db');
   // Create system tags
   const systemTags = [
-    { name: 'Technology', color: '#FF5733', isSystem: true },
-    { name: 'Health', color: '#33FF57', isSystem: true },
-    { name: 'Finance', color: '#3357FF', isSystem: true },
-    { name: 'Science', color: '#FF33F6', isSystem: true },
-    { name: 'Entertainment', color: '#33FFF6', isSystem: true },
-    { name: 'Reading', color: '#F6FF33', isSystem: true },
+    { name: 'Technology', color: '#EF4444', isSystem: true },
+    { name: 'Health', color: '#10B981', isSystem: true },
+    { name: 'Finance', color: '#3B82F6', isSystem: true },
+    { name: 'Science', color: '#F59E0B', isSystem: true },
+    { name: 'Entertainment', color: '#6366F1', isSystem: true },
+    { name: 'Reading', color: '#8B5CF6', isSystem: true },
   ];
 
   // Insert system tags
