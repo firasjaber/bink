@@ -3,12 +3,12 @@ import * as queries from 'db/src/queries';
 import Elysia, { error, t } from 'elysia';
 import { lucia, drizzle } from '../index';
 import { getUserIdFromSession, validateSession } from '../auth';
+import { lucia } from '../lucia';
 
 export const users = new Elysia({ prefix: '/users' })
   .post(
     '/login',
     async ({ body, error, set }) => {
-      console.log('body', body);
       const user = await queries.user.selectUserByEmail(drizzle, body.email);
 
       if (!user) {
@@ -28,9 +28,7 @@ export const users = new Elysia({ prefix: '/users' })
       console.log('user', user);
 
       const session = await lucia.createSession(user.id, {});
-      console.log('session', session);
       const sessionCookie = lucia.createSessionCookie(session.id);
-      console.log('sessionCookie', sessionCookie);
       set.headers['Set-Cookie'] = sessionCookie.serialize();
 
       return { data: { email: user.email } };

@@ -1,5 +1,4 @@
 import { instrumentation } from './instrumentation';
-
 import cors from '@elysiajs/cors';
 import { logger } from '@bogeychan/elysia-logger';
 import { initDrizzle } from 'db';
