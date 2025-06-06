@@ -1,3 +1,3 @@
 import { createPinoLogger } from '@bogeychan/elysia-logger';
 
-export const logger = createPinoLogger();
+export const logger = createPinoLogger({});

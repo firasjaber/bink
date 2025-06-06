@@ -1,7 +1,7 @@
 import argon from 'argon2';
 import * as queries from 'db/src/queries';
 import Elysia, { error, t } from 'elysia';
-import { drizzle } from '..';
+import { lucia, drizzle } from '../index';
 import { getUserIdFromSession, validateSession } from '../auth';
 import { lucia } from '../lucia';
 
@@ -24,6 +24,8 @@ export const users = new Elysia({ prefix: '/users' })
       if (!isValidPassword) {
         throw error('Unauthorized', 'Invalid credentials');
       }
+
+      console.log('user', user);
 
       const session = await lucia.createSession(user.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);

@@ -1,4 +1,4 @@
-import { lucia } from './lucia';
+import { lucia } from '.';
 
 export const validateSession = async (cookie: string) => {
   const sessionId = lucia.readSessionCookie(cookie);

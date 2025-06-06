@@ -209,7 +209,11 @@ export async function updateLink(
 
 export async function selectLinkTags(db: Awaited<ReturnType<typeof initDrizzle>>, linkId: string) {
   return db
-    .select()
+    .select({
+      id: linkTagTable.id,
+      name: linkTagTable.name,
+      color: linkTagTable.color,
+    })
     .from(linkTagsToLinks)
     .innerJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
     .where(eq(linkTagsToLinks.linkId, linkId));

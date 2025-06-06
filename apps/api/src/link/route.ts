@@ -3,7 +3,7 @@ import * as queries from 'db/src/queries';
 import { LinkStateEnum } from 'db/src/schema';
 import { insertLinkSchema } from 'db/src/zod.schema';
 import Elysia, { t } from 'elysia';
-import { drizzle } from '..';
+import { drizzle } from '../';
 import { getUserIdFromSession, validateSession } from '../auth';
 import { convertTextToEmbeddings, extractTextFromNotes, isURLReachable } from './helper';
 
@@ -232,7 +232,7 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
 
         const otherAvailableTags = await queries.link.selectLinkOtherAvailableTagsByLinkIds(
           drizzle,
-          linkTags.map((tag) => tag.link_tag.id),
+          linkTags.map((tag) => tag.id),
         );
 
         return {

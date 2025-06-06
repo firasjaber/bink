@@ -205,8 +205,8 @@ function SignUpTab() {
   // react query mutation
   const { mutate, isPending } = useMutation({
     mutationFn: signUp,
-    onSuccess: async (data) => {
-      await setUser(data.sessionId);
+    onSuccess: async () => {
+      await setUser();
       navigate({ to: '/' });
     },
     onError: (error) => {
