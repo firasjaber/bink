@@ -16,6 +16,7 @@
     "lint:fix": "biome lint --fix",
     "format": "biome format --write",
     "format:check": "biome format",
+    "check": "biome check",
     "prepare": "bunx husky"
   },
   "workspaces": ["apps/*", "packages/*"],

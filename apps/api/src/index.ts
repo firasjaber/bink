@@ -1,13 +1,13 @@
-import { instrumentation } from './instrumentation';
-import cors from '@elysiajs/cors';
 import { logger } from '@bogeychan/elysia-logger';
+import cors from '@elysiajs/cors';
 import { initDrizzle } from 'db';
 import { Elysia } from 'elysia';
-import { initLucia } from './lucia';
 import { googleAuth } from './auth/google.route';
 import { config } from './config';
+import { instrumentation } from './instrumentation';
 import { links } from './link/route';
 import { logger as mainLogger } from './logger';
+import { initLucia } from './lucia';
 import { users } from './user/route';
 
 mainLogger.info('Connecting to database...');
