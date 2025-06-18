@@ -1,8 +1,8 @@
 {
   "name": "lin",
   "devDependencies": {
-    "@tanstack/router-devtools": "^1.44.2",
-    "@tanstack/router-plugin": "^1.44.2",
+    "@tanstack/router-devtools": "^1.121.18",
+    "@tanstack/router-plugin": "^1.121.18",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
