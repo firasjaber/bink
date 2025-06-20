@@ -58,6 +58,7 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
                   limit,
                   query.search,
                   cursor,
+                  query.tagIds,
                 );
               total = resultTotal;
               links = resultLinks;
@@ -97,9 +98,18 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
             limit: t.Optional(t.Number()),
             search: t.Optional(t.String()),
             smartSearch: t.Optional(t.Boolean()),
+            tagIds: t.Optional(t.Array(t.String())),
           }),
         },
       )
+      .get('/tags', async ({ userId, error }) => {
+        if (!userId) {
+          throw error('Unauthorized', 'Invalid session');
+        }
+
+        const tags = await queries.link.selectAllUserTags(drizzle, userId);
+        return { data: tags };
+      })
       .get(
         '/:id',
         async ({ userId, params: { id }, error }) => {

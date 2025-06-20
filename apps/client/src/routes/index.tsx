@@ -6,13 +6,22 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getLinks, updateLinkEmbeddings } from '@/eden';
+import { getAllUserTags, getLinks, updateLinkEmbeddings } from '@/eden';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
-import { Edit, ExternalLink, Search, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  ExternalLink,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -31,12 +40,28 @@ export const Route = createFileRoute('/')({
 function Index() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSmartSearch, setIsSmartSearch] = useState(false);
+  const [showTagFilter, setShowTagFilter] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
+  const [hasInitializedTags, setHasInitializedTags] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   const { mutateAsync: updateLinkEmbeddingsMutation, isPending: isUpdatingEmbeddings } =
     useMutation({
       mutationFn: () => updateLinkEmbeddings(),
     });
+
+  const { data: allTags, isLoading: isLoadingTags } = useQuery({
+    queryKey: ['userTags'],
+    queryFn: () => getAllUserTags(),
+  });
+
+  // Initialize with all tags selected when tags are loaded
+  useEffect(() => {
+    if (allTags && !hasInitializedTags) {
+      setSelectedTagIds(new Set(allTags.map((tag) => tag.id)));
+      setHasInitializedTags(true);
+    }
+  }, [allTags, hasInitializedTags]);
 
   const handleSmartSearchToggle = async () => {
     if (!isSmartSearch) {
@@ -46,10 +71,69 @@ function Index() {
     setSearchTerm('');
   };
 
+  const handleTagToggle = (tagId: string) => {
+    const newSelectedTags = new Set(selectedTagIds);
+    if (newSelectedTags.has(tagId)) {
+      newSelectedTags.delete(tagId);
+    } else {
+      newSelectedTags.add(tagId);
+    }
+    setSelectedTagIds(newSelectedTags);
+  };
+
+  const handleSelectAllTags = () => {
+    if (allTags) {
+      setSelectedTagIds(new Set(allTags.map((tag) => tag.id)));
+    }
+  };
+
+  const handleClearAllTags = () => {
+    setSelectedTagIds(new Set());
+  };
+
+  // Determine what to pass as tagIds based on selection
+  const getTagIdsForQuery = () => {
+    if (!allTags) return undefined;
+
+    const allTagIds = new Set(allTags.map((tag) => tag.id));
+    const isAllSelected =
+      allTagIds.size === selectedTagIds.size &&
+      Array.from(allTagIds).every((id) => selectedTagIds.has(id));
+
+    if (isAllSelected) {
+      // All tags selected - don't filter by tags (return undefined)
+      return undefined;
+    } else if (selectedTagIds.size === 0) {
+      // No tags selected - use special indicator for "no tags"
+      return ['__NO_TAGS__'];
+    } else {
+      // Some tags selected
+      return Array.from(selectedTagIds);
+    }
+  };
+
+  // Generate button text based on selection
+  const getButtonText = () => {
+    if (!allTags) return 'Search across all tags';
+
+    const allTagIds = new Set(allTags.map((tag) => tag.id));
+    const isAllSelected =
+      allTagIds.size === selectedTagIds.size &&
+      Array.from(allTagIds).every((id) => selectedTagIds.has(id));
+
+    if (isAllSelected) {
+      return 'Search across all tags';
+    } else if (selectedTagIds.size === 0) {
+      return 'No tags selected';
+    } else {
+      return `${selectedTagIds.size} tag${selectedTagIds.size !== 1 ? 's' : ''} selected`;
+    }
+  };
+
   const linksQuery = useInfiniteQuery({
-    queryKey: ['links', debouncedSearch],
+    queryKey: ['links', debouncedSearch, Array.from(selectedTagIds)],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      getLinks(pageParam, debouncedSearch, isSmartSearch),
+      getLinks(pageParam, debouncedSearch, isSmartSearch, getTagIdsForQuery()),
     initialPageParam: null,
     getNextPageParam: (lastPage, _) => lastPage.nextCursor,
   });
@@ -102,6 +186,99 @@ function Index() {
           </div>
           <AddLink />
         </div>
+
+        {/* Tag Filter Section */}
+        <div className="mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowTagFilter(!showTagFilter)}
+            className="text-sm text-gray-500 hover:text-gray-700 p-0 h-auto font-normal"
+          >
+            {getButtonText()}
+            {showTagFilter ? (
+              <ChevronUp className="w-4 h-4 ml-1" />
+            ) : (
+              <ChevronDown className="w-4 h-4 ml-1" />
+            )}
+          </Button>
+
+          {showTagFilter && (
+            <div className="mt-3 p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700">Filter by tags</h3>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAllTags}
+                    className="text-xs h-6 px-2"
+                  >
+                    Select all
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearAllTags}
+                    className="text-xs h-6 px-2"
+                  >
+                    Clear all
+                  </Button>
+                </div>
+              </div>
+
+              {isLoadingTags ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <Skeleton key={index} className="h-6 w-16" />
+                  ))}
+                </div>
+              ) : allTags && allTags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map((tag) => (
+                    <Button
+                      key={tag.id}
+                      variant={selectedTagIds.has(tag.id) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleTagToggle(tag.id)}
+                      className={cn(
+                        'h-6 px-2 text-xs transition-all duration-200',
+                        selectedTagIds.has(tag.id)
+                          ? `bg-[${tag.color}] hover:bg-[${tag.color}]/80 text-white border-[${tag.color}]`
+                          : `border-[${tag.color}] text-[${tag.color}] hover:bg-[${tag.color}]/10`,
+                      )}
+                    >
+                      {selectedTagIds.has(tag.id) && <Check className="w-3 h-3 mr-1" />}
+                      {tag.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No tags available</p>
+              )}
+
+              {selectedTagIds.size > 0 && selectedTagIds.size < (allTags?.length || 0) && (
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">
+                      {selectedTagIds.size} tag{selectedTagIds.size !== 1 ? 's' : ''} selected
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearAllTags}
+                      className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Clear filters
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="text-sm text-gray-500 my-4">
           {linksQuery.isLoading && 'Loading...'}
           {linksQuery.data &&
@@ -112,7 +289,7 @@ function Index() {
             ? Array.from({ length: 6 }).map((_, index) => (
                 <Skeleton key={index} className="w-full h-40" />
               ))
-            : links?.map((link) => <BookmarkCard key={link?.id} bookmark={link} />)}
+            : links?.map((link) => link && <BookmarkCard key={link.id} bookmark={link} />)}
         </div>
         {linksQuery.hasNextPage && (
           <div className="flex justify-center mt-4">
@@ -139,6 +316,7 @@ function BookmarkCard({
     id: string;
     description: string | null;
     tags: { name: string; color: string }[];
+    state?: 'processing' | 'processed' | 'failed';
   };
 }) {
   const isProcessing = !bookmark.title;
@@ -181,7 +359,7 @@ function BookmarkCard({
                 Visit
               </Button>
             </Link>
-            <Link to={`/link/${bookmark.id}`}>
+            <Link to="/link/$id" params={{ id: bookmark.id }}>
               <Button variant="secondary" size="sm">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit

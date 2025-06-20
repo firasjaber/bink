@@ -18,7 +18,7 @@ const client = treaty<App>(import.meta.env.VITE_API_URL, {
 export const signIn = async (data: { email: string; password: string }) => {
   const res = await client.users.login.post(data);
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(typeof res.error.value === 'string' ? res.error.value : 'Sign in failed');
   }
   return res.data.data;
 };
@@ -31,7 +31,9 @@ export const signUp = async (data: {
 }) => {
   const response = await client.users.register.post(data);
   if (response.error) {
-    throw new Error(response.error.value as string);
+    throw new Error(
+      typeof response.error.value === 'string' ? response.error.value : 'Sign up failed',
+    );
   }
   return response.data.data;
 };
@@ -53,12 +55,19 @@ export const logout = async () => {
 export const createLink = async (data: { url: string }) => {
   const res = await client.links.post(data);
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to create link',
+    );
   }
 };
 
-export const getLinks = async (cursor: string | null, search?: string, smartSearch?: boolean) => {
-  const query: { cursor?: string; search?: string; smartSearch?: boolean } = {};
+export const getLinks = async (
+  cursor: string | null,
+  search?: string,
+  smartSearch?: boolean,
+  tagIds?: string[],
+) => {
+  const query: { cursor?: string; search?: string; smartSearch?: boolean; tagIds?: string[] } = {};
   if (cursor) {
     query.cursor = cursor;
   }
@@ -68,11 +77,14 @@ export const getLinks = async (cursor: string | null, search?: string, smartSear
   if (smartSearch) {
     query.smartSearch = smartSearch;
   }
+  if (tagIds && tagIds.length > 0) {
+    query.tagIds = tagIds;
+  }
 
   const res = await client.links.get({ query });
 
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(typeof res.error.value === 'string' ? res.error.value : 'Failed to get links');
   }
   return res.data;
 };
@@ -80,7 +92,7 @@ export const getLinks = async (cursor: string | null, search?: string, smartSear
 export const getLink = async (id: string) => {
   const res = await client.links({ id }).get();
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(typeof res.error.value === 'string' ? res.error.value : 'Failed to get link');
   }
   return res.data?.data;
 };
@@ -88,7 +100,9 @@ export const getLink = async (id: string) => {
 export const getLinkTags = async (id: string) => {
   const res = await client.links({ id }).tags.get();
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to get link tags',
+    );
   }
   return res.data?.data;
 };
@@ -96,7 +110,9 @@ export const getLinkTags = async (id: string) => {
 export const deleteLink = async (id: string) => {
   const res = await client.links({ id }).delete();
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to delete link',
+    );
   }
   return res.data;
 };
@@ -116,7 +132,9 @@ export const updateLink = async (
     notes: data.notes ? JSON.stringify(data.notes) : undefined,
   });
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to update link',
+    );
   }
   return res.data;
 };
@@ -127,7 +145,9 @@ export const updateLinkTags = async (
 ) => {
   const res = await client.links({ id }).tags.put(data);
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to update link tags',
+    );
   }
   return res.data;
 };
@@ -136,14 +156,20 @@ export const updateLinkEmbeddings = async () => {
   await new Promise((resolve) => setTimeout(resolve, 1500));
   const res = await client.links.embeddings.put();
   if (res.error) {
-    throw new Error(res.error.value as string);
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to update embeddings',
+    );
   }
 };
 
 export const getGoogleAuthUrl = async () => {
   const response = await client.auth.google.get();
   if (response.error) {
-    throw new Error(response.error.value as string);
+    throw new Error(
+      typeof response.error.value === 'string'
+        ? response.error.value
+        : 'Failed to get Google auth URL',
+    );
   }
   return response.data.url;
 };
@@ -151,8 +177,22 @@ export const getGoogleAuthUrl = async () => {
 export const googleAuthCallback = async (code: string) => {
   const response = await client.auth.google.callback.get({ query: { code } });
   if (response.error) {
-    throw new Error(response.error.value as string);
+    throw new Error(
+      typeof response.error.value === 'string'
+        ? response.error.value
+        : 'Google auth callback failed',
+    );
   }
 
   return response.data;
+};
+
+export const getAllUserTags = async () => {
+  const res = await client.links.tags.get();
+  if (res.error) {
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to get user tags',
+    );
+  }
+  return res.data?.data;
 };

@@ -1,4 +1,17 @@
-import { and, cosineDistance, count, desc, eq, gt, isNull, notInArray, sql } from 'drizzle-orm';
+import {
+  and,
+  cosineDistance,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { initDrizzle } from '../client';
 import { linkTable, linkTagTable, linkTagsToLinks } from '../schema';
 
@@ -92,10 +105,15 @@ export async function selectLinksByFullTextSearch(
   limit: number,
   searchQuery?: string,
   cursor?: string,
+  tagIds?: string[],
 ) {
+  // Special case: if tagIds contains "__NO_TAGS__", show links with no tags
+  const isNoTagsFilter = tagIds && tagIds.length === 1 && tagIds[0] === '__NO_TAGS__';
+
   const total = await db
-    .select({ count: count() })
+    .select({ count: countDistinct(linkTable.id) })
     .from(linkTable)
+    .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
     .where(
       and(
         eq(linkTable.userId, userId),
@@ -107,6 +125,11 @@ export async function selectLinksByFullTextSearch(
                         )
                         @@ websearch_to_tsquery('english', ${searchQuery})`
           : undefined,
+        isNoTagsFilter
+          ? isNull(linkTagsToLinks.tagId)
+          : tagIds && tagIds.length > 0
+            ? inArray(linkTagsToLinks.tagId, tagIds)
+            : undefined,
       ),
     );
 
@@ -146,6 +169,15 @@ export async function selectLinksByFullTextSearch(
                       @@ websearch_to_tsquery('english', ${searchQuery})`
           : undefined,
         cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
+        isNoTagsFilter
+          ? isNull(linkTagsToLinks.tagId)
+          : tagIds && tagIds.length > 0
+            ? sql`${linkTable.id} IN (
+              SELECT DISTINCT ${linkTagsToLinks.linkId} 
+              FROM ${linkTagsToLinks} 
+              WHERE ${inArray(linkTagsToLinks.tagId, tagIds)}
+            )`
+            : undefined,
       ),
     )
     .groupBy(
@@ -221,6 +253,22 @@ export async function selectLinkTags(db: Awaited<ReturnType<typeof initDrizzle>>
 
 export async function selectAllSystemLinkTags(db: Awaited<ReturnType<typeof initDrizzle>>) {
   return db.select().from(linkTagTable).where(eq(linkTagTable.isSystem, true));
+}
+
+export async function selectAllUserTags(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  userId: string,
+) {
+  return db
+    .select({
+      id: linkTagTable.id,
+      name: linkTagTable.name,
+      color: linkTagTable.color,
+      isSystem: linkTagTable.isSystem,
+    })
+    .from(linkTagTable)
+    .where(or(eq(linkTagTable.isSystem, true), eq(linkTagTable.userId, userId)))
+    .orderBy(linkTagTable.name);
 }
 
 export async function selectLinkOtherAvailableTagsByLinkIds(
