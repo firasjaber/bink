@@ -6,7 +6,7 @@ import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { config } from './config';
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
 
 // OTLP Trace Exporter Configuration
 const traceExporter = new OTLPTraceExporter({
