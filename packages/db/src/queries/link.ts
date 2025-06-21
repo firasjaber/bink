@@ -49,10 +49,19 @@ export async function selectLinksByEmbeddingSimilarity(
   searchQuery?: string,
 ) {
   const similarity = sql<number>`1 - (${cosineDistance(linkTable.embedding, embedding)})`;
+
+  // Build consistent base conditions
+  const baseConditions = and(
+    eq(linkTable.userId, userId),
+    searchQuery ? gt(similarity, 0.7) : gt(similarity, 0.65),
+  );
+
   const total = await db
-    .select({ count: count() })
+    .select({ count: countDistinct(linkTable.id) })
     .from(linkTable)
-    .where(and(eq(linkTable.userId, userId), gt(similarity, 0.65)));
+    .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
+    .where(baseConditions);
+
   const links = await db
     .select({
       id: linkTable.id,
@@ -80,8 +89,7 @@ export async function selectLinksByEmbeddingSimilarity(
     .leftJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
     .where(
       and(
-        eq(linkTable.userId, userId),
-        searchQuery ? gt(similarity, 0.7) : undefined,
+        baseConditions,
         cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
       ),
     )
@@ -110,28 +118,52 @@ export async function selectLinksByFullTextSearch(
   // Special case: if tagIds contains "__NO_TAGS__", show links with no tags
   const isNoTagsFilter = tagIds && tagIds.length === 1 && tagIds[0] === '__NO_TAGS__';
 
+  // Build base conditions for links
+  const baseLinkConditions = and(
+    eq(linkTable.userId, userId),
+    searchQuery
+      ? sql`(
+                      setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
+                      setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
+                      setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
+                    )
+                    @@ websearch_to_tsquery('english', ${searchQuery})`
+      : undefined,
+    cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
+  );
+
+  // Build tag filtering conditions
+  const tagFilterCondition = isNoTagsFilter
+    ? sql`${linkTable.id} NOT IN (SELECT DISTINCT ${linkTagsToLinks.linkId} FROM ${linkTagsToLinks})`
+    : tagIds && tagIds.length > 0
+      ? sql`${linkTable.id} IN (
+          SELECT DISTINCT ${linkTagsToLinks.linkId} 
+          FROM ${linkTagsToLinks} 
+          WHERE ${inArray(linkTagsToLinks.tagId, tagIds)}
+        )`
+      : undefined;
+
+  // For total count - simplified query without cursor
+  const totalConditions = and(
+    eq(linkTable.userId, userId),
+    searchQuery
+      ? sql`(
+                      setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
+                      setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
+                      setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
+                    )
+                    @@ websearch_to_tsquery('english', ${searchQuery})`
+      : undefined,
+    tagFilterCondition,
+  );
+
   const total = await db
-    .select({ count: countDistinct(linkTable.id) })
+    .select({ count: count(linkTable.id) })
     .from(linkTable)
-    .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
-    .where(
-      and(
-        eq(linkTable.userId, userId),
-        searchQuery
-          ? sql`(
-                          setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
-                          setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
-                        )
-                        @@ websearch_to_tsquery('english', ${searchQuery})`
-          : undefined,
-        isNoTagsFilter
-          ? isNull(linkTagsToLinks.tagId)
-          : tagIds && tagIds.length > 0
-            ? inArray(linkTagsToLinks.tagId, tagIds)
-            : undefined,
-      ),
-    );
+    .where(totalConditions);
+
+  // For links query - use subquery approach to avoid GROUP BY issues with cursor
+  const linksConditions = and(baseLinkConditions, tagFilterCondition);
 
   const links = await db
     .select({
@@ -143,52 +175,18 @@ export async function selectLinksByFullTextSearch(
       state: linkTable.state,
       createdAt: linkTable.createdAt,
       tags: sql<Array<{ name: string; color: string }>>`
-                  array_agg(
-                    CASE 
-                      WHEN ${linkTagTable.name} IS NOT NULL 
-                      THEN json_build_object(
-                        'name', ${linkTagTable.name},
-                        'color', ${linkTagTable.color}
-                      )
-                      ELSE NULL 
-                    END
+                  COALESCE(
+                    (SELECT array_agg(
+                      json_build_object('name', ${linkTagTable.name}, 'color', ${linkTagTable.color})
+                    )
+                    FROM ${linkTagsToLinks}
+                    JOIN ${linkTagTable} ON ${linkTagsToLinks.tagId} = ${linkTagTable.id}
+                    WHERE ${linkTagsToLinks.linkId} = ${linkTable.id}),
+                    ARRAY[]::json[]
                   )`,
     })
     .from(linkTable)
-    .leftJoin(linkTagsToLinks, eq(linkTable.id, linkTagsToLinks.linkId))
-    .leftJoin(linkTagTable, eq(linkTagsToLinks.tagId, linkTagTable.id))
-    .where(
-      and(
-        eq(linkTable.userId, userId),
-        searchQuery
-          ? sql`(
-                        setweight(to_tsvector('english', COALESCE(${linkTable.title}, '')), 'A') ||
-                        setweight(to_tsvector('english', COALESCE(${linkTable.description}, '')), 'B') ||
-                        setweight(to_tsvector('english', COALESCE(${linkTable.notesText}, '')), 'C')
-                      )
-                      @@ websearch_to_tsquery('english', ${searchQuery})`
-          : undefined,
-        cursor ? sql`${linkTable.createdAt} < ${new Date(parseInt(cursor))}` : undefined,
-        isNoTagsFilter
-          ? isNull(linkTagsToLinks.tagId)
-          : tagIds && tagIds.length > 0
-            ? sql`${linkTable.id} IN (
-              SELECT DISTINCT ${linkTagsToLinks.linkId} 
-              FROM ${linkTagsToLinks} 
-              WHERE ${inArray(linkTagsToLinks.tagId, tagIds)}
-            )`
-            : undefined,
-      ),
-    )
-    .groupBy(
-      linkTable.id,
-      linkTable.url,
-      linkTable.title,
-      linkTable.description,
-      linkTable.image,
-      linkTable.state,
-      linkTable.createdAt,
-    )
+    .where(linksConditions)
     .orderBy(desc(linkTable.createdAt))
     .limit(limit + 1);
 

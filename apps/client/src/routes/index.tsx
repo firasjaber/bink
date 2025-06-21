@@ -130,10 +130,12 @@ function Index() {
     }
   };
 
+  const tagIdsForQuery = getTagIdsForQuery();
+
   const linksQuery = useInfiniteQuery({
-    queryKey: ['links', debouncedSearch, Array.from(selectedTagIds)],
+    queryKey: ['links', debouncedSearch, isSmartSearch, Array.from(selectedTagIds)],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      getLinks(pageParam, debouncedSearch, isSmartSearch, getTagIdsForQuery()),
+      getLinks(pageParam, debouncedSearch, isSmartSearch, tagIdsForQuery),
     initialPageParam: null,
     getNextPageParam: (lastPage, _) => lastPage.nextCursor,
   });

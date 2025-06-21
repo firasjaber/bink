@@ -75,14 +75,16 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
             const results = transformedLinks.slice(0, limit);
 
             // Generate next cursor if there are more results
-            const nextCursor = hasMore
-              ? results[results.length - 1].createdAt.getTime().toString()
-              : null;
+            // Use the last item from the results (which is the actual data being returned)
+            const nextCursor =
+              hasMore && results.length > 0
+                ? results[results.length - 1].createdAt.getTime().toString()
+                : null;
 
             return {
               data: results,
               nextCursor,
-              total: total[0].count,
+              total: total[0]?.count || 0,
             };
           } catch (error) {
             log.error(error, 'Error getting links');
