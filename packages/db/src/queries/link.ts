@@ -46,15 +46,12 @@ export async function selectLinksByEmbeddingSimilarity(
   embedding: number[],
   limit: number,
   cursor?: string,
-  searchQuery?: string,
 ) {
   const similarity = sql<number>`1 - (${cosineDistance(linkTable.embedding, embedding)})`;
+  console.log(similarity);
 
   // Build consistent base conditions
-  const baseConditions = and(
-    eq(linkTable.userId, userId),
-    searchQuery ? gt(similarity, 0.7) : gt(similarity, 0.65),
-  );
+  const baseConditions = and(eq(linkTable.userId, userId), gt(similarity, 0.25));
 
   const total = await db
     .select({ count: countDistinct(linkTable.id) })

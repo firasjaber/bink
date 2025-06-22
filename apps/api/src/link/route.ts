@@ -46,7 +46,6 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
                   embedding,
                   limit,
                   cursor,
-                  query.search,
                 );
               total = resultTotal;
               links = resultLinks;
