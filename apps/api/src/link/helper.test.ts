@@ -12,6 +12,23 @@ mock.module('../redis', () => ({
   },
 }));
 
+// Mock the openai client with return value
+const mockOpenAICreate = mock(() => ({
+  data: [
+    {
+      embedding: Array.from({ length: 1536 }, (_, i) => Math.random() * 0.1 + i * 0.001),
+    },
+  ],
+}));
+
+mock.module('openai', () => ({
+  default: class MockOpenAI {
+    embeddings = {
+      create: mockOpenAICreate,
+    };
+  },
+}));
+
 describe('isURLReachable', () => {
   test('should return false if url is not reachable', async () => {
     const url = 'http://invalid-url';
