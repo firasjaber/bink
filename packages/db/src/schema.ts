@@ -75,7 +75,7 @@ export const linkTable = pgTable(
     state: linkStateEnum('state').notNull(),
     notes: jsonb('notes'),
     notesText: text('notes_text'),
-    embedding: vector('embedding', { dimensions: 768 }),
+    embedding: vector('embedding', { dimensions: 1536 }),
     userId: uuid('user_id')
       .notNull()
       .references(() => userTable.id, { onDelete: 'cascade' }),

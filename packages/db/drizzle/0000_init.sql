@@ -11,7 +11,7 @@ CREATE TABLE "link" (
 	"state" "link_state" NOT NULL,
 	"notes" jsonb,
 	"notes_text" text,
-	"embedding" vector(768),
+	"embedding" vector(1536),
 	"user_id" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
