@@ -3,6 +3,8 @@ version: "3.8"
 volumes:
   bink-db-pgvector-local:
     name: bink-db-pgvector-local
+  bink-redis-local:
+    name: bink-redis-local
 
 services:
   bink-db-pgvector:
@@ -16,3 +18,12 @@ services:
       - bink-db-pgvector-local:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+
+  bink-redis:
+    container_name: bink-redis
+    image: redis:7-alpine
+    volumes:
+      - bink-redis-local:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes

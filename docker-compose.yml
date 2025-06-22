@@ -12,6 +12,7 @@ services:
       - apps/api/.env
     depends_on:
       - bink-db
+      - bink-redis
     logging:
       driver: "fluentd"
       options:
@@ -28,6 +29,7 @@ services:
       - apps/ranj/.env
     depends_on:
       - bink-db
+      - bink-redis
     logging:
       driver: "fluentd"
       options:
@@ -59,9 +61,22 @@ services:
     networks:
       - bink-network
 
+  bink-redis:
+    container_name: bink-redis
+    image: redis:7-alpine
+    volumes:
+      - bink-redis:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    networks:
+      - bink-network
+
 volumes:
   bink-db:
     name: bink-db
+  bink-redis:
+    name: bink-redis
 
 networks:
   bink-network:
