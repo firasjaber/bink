@@ -1,3 +1,8 @@
+import { createHash } from 'crypto';
+import OpenAI from 'openai';
+import { config } from '../config';
+import { redis } from '../redis';
+
 export async function isURLReachable(urlString: string): Promise<boolean> {
   try {
     const url = new URL(urlString);
@@ -43,13 +48,37 @@ export function extractTextFromNotes(notes: TextNode | null): string {
 }
 
 export async function convertTextToEmbeddings(text: string) {
-  const req = await fetch('http://localhost:11434/api/embeddings', {
-    method: 'POST',
-    body: JSON.stringify({
-      model: 'jina/jina-embeddings-v2-base-en',
-      prompt: text,
-    }),
+  // Create a hash of the text for caching
+  const textHash = createHash('sha256').update(text).digest('hex');
+  const cacheKey = `embedding:${textHash}`;
+
+  try {
+    // Try to get cached embedding
+    const cachedEmbedding = await redis.get(cacheKey);
+    if (cachedEmbedding) {
+      return JSON.parse(cachedEmbedding);
+    }
+  } catch (error) {
+    console.warn('Redis cache read failed:', error);
+  }
+
+  let embedding: number[];
+
+  const openai = new OpenAI({
+    apiKey: config.OPENAI_API_KEY,
   });
-  const responseData = await req.json();
-  return responseData.embedding;
+  const response = await openai.embeddings.create({
+    model: 'text-embedding-3-small',
+    input: text,
+  });
+  embedding = response.data[0].embedding;
+
+  // Cache the embedding with 1 day TTL (86400 seconds)
+  try {
+    await redis.setEx(cacheKey, 86400, JSON.stringify(embedding));
+  } catch (error) {
+    console.warn('Redis cache write failed:', error);
+  }
+
+  return embedding;
 }

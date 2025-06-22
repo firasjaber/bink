@@ -13,6 +13,9 @@ const configSchema = z.object({
   /** DATABASE URL  */
   DATABASE_URL: z.string().url(),
 
+  /** Redis URL for caching */
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+
   /** Google OAuth client ID */
   GOOGLE_OAUTH_CLIENT_ID: z.string().min(1),
 
@@ -30,6 +33,9 @@ const configSchema = z.object({
 
   /** OpenTelemetry OTLP API key */
   OTEL_EXPORTER_OTLP_API_KEY: z.string().min(1),
+
+  /** OpenAI API key */
+  OPENAI_API_KEY: z.string().min(1),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -44,8 +50,10 @@ function validateEnvConfig(env: NodeJS.ProcessEnv): Config {
     GOOGLE_REDIRECT_URI: env.GOOGLE_REDIRECT_URI,
     FRONTEND_URL: env.FRONTEND_URL,
     DATABASE_URL: env.DATABASE_URL,
+    REDIS_URL: env.REDIS_URL,
     OTEL_EXPORTER_OTLP_ENDPOINT: env.OTEL_EXPORTER_OTLP_ENDPOINT,
     OTEL_EXPORTER_OTLP_API_KEY: env.OTEL_EXPORTER_OTLP_API_KEY,
+    OPENAI_API_KEY: env.OPENAI_API_KEY,
   });
 
   if (!result.success) {
