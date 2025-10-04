@@ -15,9 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
 import { deleteAccount, getLinks } from '@/eden';
 import { useAuthStore } from '@/stores/auth';
+import { useThemeStore } from '@/stores/theme';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Link } from 'lucide-react';
+import { Link, Moon, Sun } from 'lucide-react';
 
 export const Route = createFileRoute('/profile/$id')({
   component: Profile,
@@ -35,6 +36,7 @@ export const Route = createFileRoute('/profile/$id')({
 
 function Profile() {
   const { user, logout } = useAuthStore((state) => state);
+  const { theme, toggleTheme } = useThemeStore((state) => state);
   const navigate = Route.useNavigate();
 
   const { data: linksData } = useQuery({
@@ -76,9 +78,18 @@ function Profile() {
               <CardTitle>Profile</CardTitle>
               <CardDescription>Manage your account settings</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => logoutMutate()} disabled={isLoggingOut}>
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+                {theme === 'dark' ? (
+                  <Sun className="h-[1.2rem] w-[1.2rem]" />
+                ) : (
+                  <Moon className="h-[1.2rem] w-[1.2rem]" />
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => logoutMutate()} disabled={isLoggingOut}>
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

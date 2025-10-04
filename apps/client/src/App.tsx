@@ -1,6 +1,7 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { AuthState, useAuthStore } from './stores/auth';
+import { useThemeStore } from './stores/theme';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Import the generated route tree
@@ -35,6 +36,17 @@ declare module '@tanstack/react-router' {
 
 export function App() {
   const auth = useAuthStore();
+  const theme = useThemeStore((state) => state.theme);
+
+  // Initialize theme on mount
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
 
   // Update router context when auth state changes
   useEffect(() => {

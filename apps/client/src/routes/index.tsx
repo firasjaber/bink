@@ -147,7 +147,7 @@ function Index() {
       <main className="flex-1 p-4">
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <div className="relative w-full sm:flex-1 flex items-center">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-10"
               placeholder="Search bookmarks..."
@@ -162,7 +162,7 @@ function Index() {
                       <div
                         className={cn(
                           ' transition-colors duration-500 flex items-center space-x-2',
-                          isSmartSearch ? 'text-purple-500' : 'text-gray-400',
+                          isSmartSearch ? 'text-purple-500' : 'text-muted-foreground',
                           isUpdatingEmbeddings && 'animate-pulse',
                         )}
                       >
@@ -195,7 +195,7 @@ function Index() {
             variant="ghost"
             size="sm"
             onClick={() => setShowTagFilter(!showTagFilter)}
-            className="text-sm text-gray-500 hover:text-gray-700 p-0 h-auto font-normal"
+            className="text-sm text-muted-foreground hover:text-foreground p-0 h-auto font-normal"
           >
             {getButtonText()}
             {showTagFilter ? (
@@ -206,9 +206,9 @@ function Index() {
           </Button>
 
           {showTagFilter && (
-            <div className="mt-3 p-4 border rounded-lg bg-gray-50">
+            <div className="mt-3 p-4 border rounded-lg bg-muted/50">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-700">Filter by tags</h3>
+                <h3 className="text-sm font-medium text-foreground">Filter by tags</h3>
                 <div className="flex space-x-2">
                   <Button
                     variant="ghost"
@@ -256,20 +256,20 @@ function Index() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No tags available</p>
+                <p className="text-sm text-muted-foreground">No tags available</p>
               )}
 
               {selectedTagIds.size > 0 && selectedTagIds.size < (allTags?.length || 0) && (
                 <div className="mt-3 pt-3 border-t">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {selectedTagIds.size} tag{selectedTagIds.size !== 1 ? 's' : ''} selected
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleClearAllTags}
-                      className="text-xs h-6 px-2 text-gray-500 hover:text-gray-700"
+                      className="text-xs h-6 px-2 text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-3 h-3 mr-1" />
                       Clear filters
@@ -281,7 +281,7 @@ function Index() {
           )}
         </div>
 
-        <div className="text-sm text-gray-500 my-4">
+        <div className="text-sm text-muted-foreground my-4">
           {linksQuery.isLoading && 'Loading...'}
           {linksQuery.data &&
             `Showing ${links?.length} out of ${linksQuery.data?.pages[0].total} bookmarks`}
@@ -325,7 +325,7 @@ function BookmarkCard({
 
   return (
     <div
-      className={`relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
+      className={`relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-card ${
         isProcessing ? 'opacity-50 cursor-not-allowed' : ''
       } ${bookmark.image ? 'flex flex-col' : ''}`}
     >
@@ -372,17 +372,23 @@ function BookmarkCard({
       </div>
       <div className="p-4 flex-1 flex flex-col">
         <h3 className="font-semibold text-lg mb-2">{bookmark.title || 'Processing...'}</h3>
-        <p className="text-sm text-gray-600 mb-4 flex-1 break-words line-clamp-3 max-h-16">
+        <p className="text-sm text-muted-foreground mb-4 flex-1 break-words line-clamp-3 max-h-16">
           {bookmark.description ? bookmark.description : bookmark.url}
         </p>
         <div className="flex flex-wrap gap-2">
           {bookmark.tags.map((tag) => (
-            <Badge
+            <Button
               key={tag.name}
-              className={`bg-[${tag.color}] border-2 border-[${tag.color}]/80 text-primary-foreground px-2 py-1 rounded-full text-sm flex items-center`}
+              variant={'outline'}
+              size="sm"
+              className={cn(
+                'h-6 px-2 text-xs transition-all duration-200',
+                `border-[${tag.color}] text-[${tag.color}] hover:bg-[${tag.color}]/10`,
+              )}
+              disabled={true}
             >
               {tag.name}
-            </Badge>
+            </Button>
           ))}
         </div>
       </div>
