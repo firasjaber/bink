@@ -117,5 +117,22 @@ export const users = new Elysia({ prefix: '/users' })
             throw error('Unauthorized', 'Invalid session');
           }
           return { data: user };
+        })
+        .delete('/delete', async ({ userId, error, headers, set }) => {
+          if (!userId) {
+            throw error('Unauthorized', 'Invalid session');
+          }
+
+          const sessionId = lucia.readSessionCookie(headers.cookie ?? '');
+          if (sessionId) {
+            await lucia.invalidateSession(sessionId);
+          }
+
+          await queries.user.deleteUser(drizzle, userId);
+
+          const sessionCookie = lucia.createBlankSessionCookie();
+          set.headers['Set-Cookie'] = sessionCookie.serialize();
+
+          return { message: 'Account deleted successfully' };
         }),
   );

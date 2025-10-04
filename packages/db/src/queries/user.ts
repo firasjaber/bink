@@ -66,3 +66,7 @@ export async function insertUser(
 
   return user[0];
 }
+
+export async function deleteUser(db: Awaited<ReturnType<typeof initDrizzle>>, userId: string) {
+  await db.delete(userTable).where(eq(userTable.id, userId));
+}

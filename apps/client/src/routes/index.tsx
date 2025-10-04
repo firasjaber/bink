@@ -143,10 +143,10 @@ function Index() {
   const links = linksQuery.data?.pages.flatMap((page) => page.data);
 
   return (
-    <div className="flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)] mb-10">
+    <div className="flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)] mb-10 px-1 sm:px-[2rem]">
       <main className="flex-1 p-4">
-        <div className="flex space-x-2">
-          <div className="relative flex-1 flex items-center">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+          <div className="relative w-full sm:flex-1 flex items-center">
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               className="pl-10"
