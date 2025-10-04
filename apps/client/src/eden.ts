@@ -3,7 +3,7 @@ import type { JSONContent } from 'novel';
 import type { App } from '../../api/src';
 import { redirectToAuth } from './lib/navigation';
 
-const client = treaty<App>(import.meta.env.VITE_API_URL, {
+const client = treaty<App>(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
   fetch: {
     credentials: 'include',
     mode: 'cors',
@@ -50,6 +50,16 @@ export const getLoggedInUser = async () => {
 
 export const logout = async () => {
   return await client.users.logout.post();
+};
+
+export const deleteAccount = async () => {
+  const res = await client.users.delete.delete();
+  if (res.error) {
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to delete account',
+    );
+  }
+  return res.data;
 };
 
 export const createLink = async (data: { url: string }) => {
