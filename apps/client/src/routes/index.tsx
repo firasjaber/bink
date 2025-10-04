@@ -291,7 +291,7 @@ function Index() {
             ? Array.from({ length: 6 }).map((_, index) => (
                 <Skeleton key={index} className="w-full h-40" />
               ))
-            : links?.map((link) => link && <BookmarkCard key={link.id} bookmark={link} />)}
+            : links?.map((link) => (link ? <BookmarkCard key={link.id} bookmark={link} /> : null))}
         </div>
         {linksQuery.hasNextPage && (
           <div className="flex justify-center mt-4">

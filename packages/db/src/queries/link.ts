@@ -69,16 +69,15 @@ export async function selectLinksByEmbeddingSimilarity(
       state: linkTable.state,
       createdAt: linkTable.createdAt,
       similarity: similarity,
-      tags: sql<Array<{ name: string; color: string }>>`
-                  array_agg(
-                    CASE 
-                      WHEN ${linkTagTable.name} IS NOT NULL 
-                      THEN json_build_object(
+      tags: sql<{ name: string; color: string }[]>`
+                  COALESCE(
+                    json_agg(
+                      json_build_object(
                         'name', ${linkTagTable.name},
                         'color', ${linkTagTable.color}
                       )
-                      ELSE NULL 
-                    END
+                    ) FILTER (WHERE ${linkTagTable.id} IS NOT NULL),
+                    '[]'::json
                   )`,
     })
     .from(linkTable)
@@ -173,13 +172,15 @@ export async function selectLinksByFullTextSearch(
       createdAt: linkTable.createdAt,
       tags: sql<Array<{ name: string; color: string }>>`
                   COALESCE(
-                    (SELECT array_agg(
-                      json_build_object('name', ${linkTagTable.name}, 'color', ${linkTagTable.color})
-                    )
-                    FROM ${linkTagsToLinks}
-                    JOIN ${linkTagTable} ON ${linkTagsToLinks.tagId} = ${linkTagTable.id}
-                    WHERE ${linkTagsToLinks.linkId} = ${linkTable.id}),
-                    ARRAY[]::json[]
+                    (
+                      SELECT json_agg(
+                        json_build_object('name', ${linkTagTable.name}, 'color', ${linkTagTable.color})
+                      )
+                      FROM ${linkTagsToLinks}
+                      JOIN ${linkTagTable} ON ${linkTagsToLinks.tagId} = ${linkTagTable.id}
+                      WHERE ${linkTagsToLinks.linkId} = "link"."id"
+                    ),
+                    '[]'::json
                   )`,
     })
     .from(linkTable)
