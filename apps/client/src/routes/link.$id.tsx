@@ -61,6 +61,10 @@ const DEFAULT_NOTES: JSONContent = {
 };
 
 function Page() {
+  useEffect(() => {
+    document.title = 'Bink - Edit Link';
+  }, []);
+
   const { id } = Route.useParams();
   const navigate = Route.useNavigate();
 

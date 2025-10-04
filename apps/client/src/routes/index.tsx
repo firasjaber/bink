@@ -38,6 +38,10 @@ export const Route = createFileRoute('/')({
 });
 
 function Index() {
+  useEffect(() => {
+    document.title = 'Bink - Home';
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isSmartSearch, setIsSmartSearch] = useState(false);
   const [showTagFilter, setShowTagFilter] = useState(false);

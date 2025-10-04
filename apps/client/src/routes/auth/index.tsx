@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
@@ -38,10 +38,14 @@ export const Route = createFileRoute('/auth/')({
 });
 
 function Auth() {
+  useEffect(() => {
+    document.title = 'Bink - Login';
+  }, []);
+
   const [activeTab, setActiveTab] = useState('signin');
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <Toaster richColors />
       <Card className="w-[400px]">
         <Tabs value={activeTab} onValueChange={setActiveTab}>

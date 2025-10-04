@@ -1,13 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuthStore } from '@/stores/auth';
 import { Link } from '@tanstack/react-router';
-import { Link as LinkIcon } from 'lucide-react';
 
 export function Navbar() {
   return (
     <header className="flex justify-between p-4 border-b container">
       <Link to="/" className="flex items-center space-x-2">
-        <LinkIcon className="h-6 w-6" />
+        <img src="/logo.png" alt="Bink Logo" className="h-8 w-auto" />
         <span className="text-xl font-bold">Bink</span>
       </Link>
       <UserAvatar />

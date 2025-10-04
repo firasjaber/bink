@@ -19,6 +19,7 @@ import { useThemeStore } from '@/stores/theme';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Link, Moon, Sun } from 'lucide-react';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/profile/$id')({
   component: Profile,
@@ -35,6 +36,10 @@ export const Route = createFileRoute('/profile/$id')({
 });
 
 function Profile() {
+  useEffect(() => {
+    document.title = 'Bink - Profile';
+  }, []);
+
   const { user, logout } = useAuthStore((state) => state);
   const { theme, toggleTheme } = useThemeStore((state) => state);
   const navigate = Route.useNavigate();
