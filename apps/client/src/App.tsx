@@ -1,4 +1,5 @@
 import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { AuthState, useAuthStore } from './stores/auth';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -34,6 +35,17 @@ declare module '@tanstack/react-router' {
 
 export function App() {
   const auth = useAuthStore();
+
+  // Update router context when auth state changes
+  useEffect(() => {
+    router.update({
+      context: {
+        queryClient,
+        auth,
+      },
+    });
+  }, [auth.isAuth, auth.isLoading, auth.user]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} context={{ auth }} />

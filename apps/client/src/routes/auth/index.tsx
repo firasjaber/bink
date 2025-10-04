@@ -77,7 +77,10 @@ function SignInTab() {
     mutationFn: signIn,
     onSuccess: async () => {
       await setUser();
-      navigate({ to: '/' });
+      // Small delay to ensure auth state is updated before navigation
+      setTimeout(() => {
+        navigate({ to: '/' });
+      }, 100);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -207,7 +210,10 @@ function SignUpTab() {
     mutationFn: signUp,
     onSuccess: async () => {
       await setUser();
-      navigate({ to: '/' });
+      // Small delay to ensure auth state is updated before navigation
+      setTimeout(() => {
+        navigate({ to: '/' });
+      }, 100);
     },
     onError: (error) => {
       toast.error(error.message);

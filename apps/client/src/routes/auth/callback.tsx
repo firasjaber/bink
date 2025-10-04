@@ -1,4 +1,5 @@
 import { googleAuthCallback } from '@/eden';
+import { useAuthStore } from '@/stores/auth';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/auth/callback')({
@@ -13,6 +14,10 @@ export const Route = createFileRoute('/auth/callback')({
       if (response.error) {
         throw new Error(response.error.value as string);
       }
+
+      // Update auth store after successful Google auth
+      const { setUser } = useAuthStore.getState();
+      await setUser();
 
       throw redirect({ to: '/' });
     } catch (error) {

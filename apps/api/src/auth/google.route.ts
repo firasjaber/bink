@@ -73,7 +73,8 @@ export const googleAuth = new Elysia({ prefix: '/auth/google' })
         email,
       };
     } catch (error) {
-      log.error(error, 'Error occured whilehandling google auth callback');
+      log.error(error, 'Error occured while handling google auth callback');
       set.status = 500;
+      return { error: 'Authentication failed' };
     }
   });
