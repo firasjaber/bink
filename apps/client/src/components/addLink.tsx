@@ -19,7 +19,7 @@ import { BookmarkPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
+import { Form, FormField, FormItem, FormMessage } from './ui/form';
 
 const formSchema = z.object({
   link: z.string().url('Invalid URL'),
@@ -77,7 +77,7 @@ export function AddLink() {
                         {...field}
                         type="text"
                         placeholder="https://bink.firrj.com"
-                        className={`${form.formState.errors.link ? 'border-red-500 focus:border-red-500 text-red-500' : 'text-black'}`}
+                        className={`${form.formState.errors.link ? 'border-red-500 focus:border-red-500 text-red-500' : 'text-secondary-foreground'}`}
                       />
                       <FormMessage />
                     </FormItem>

@@ -6,13 +6,32 @@ import { redis } from '../redis';
 export async function isURLReachable(urlString: string): Promise<boolean> {
   try {
     const url = new URL(urlString);
-    const response: Response = await fetch(url, {
-      method: 'HEAD',
-      signal: AbortSignal.timeout(5000), // 5 seconds timeout
-    });
 
-    return response.ok;
-  } catch (_error) {
+    const fetchOptions = {
+      signal: AbortSignal.timeout(5000), // 5 seconds timeout
+      // @ts-ignore - Bun-specific option to ignore SSL certificate errors
+      tls: {
+        rejectUnauthorized: false,
+      },
+    };
+
+    // Try HEAD request first (faster and lighter)
+    try {
+      const response: Response = await fetch(url, {
+        method: 'HEAD',
+        ...fetchOptions,
+      });
+      return response.ok;
+    } catch (_) {
+      // Some servers don't respond to HEAD, try GET as fallback
+      const response: Response = await fetch(url, {
+        method: 'GET',
+        ...fetchOptions,
+      });
+      return response.ok;
+    }
+  } catch (error) {
+    console.error('isURLReachable error for', urlString, ':', error);
     return false;
   }
 }
