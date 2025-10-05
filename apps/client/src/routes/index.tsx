@@ -142,6 +142,14 @@ function Index() {
       getLinks(pageParam, debouncedSearch, isSmartSearch, tagIdsForQuery),
     initialPageParam: null,
     getNextPageParam: (lastPage, _) => lastPage.nextCursor,
+    refetchInterval: (query) => {
+      // Check if any link is in processing state
+      const links = query.state.data?.pages.flatMap((page) => page.data);
+      const hasProcessingLink = links?.some((link) => link?.state === 'processing');
+
+      // Poll every 2 seconds if there's a processing link, otherwise don't poll
+      return hasProcessingLink ? 2000 : false;
+    },
   });
 
   const links = linksQuery.data?.pages.flatMap((page) => page.data);
@@ -352,7 +360,7 @@ function BookmarkCard({
                 : ''
             }`}
           >
-            <span className="text-white text-xl font-bold">
+            <span className="text-white text-xl font-bold ">
               {bookmark.title ? bookmark.title.charAt(0) : 'Processing...'}
             </span>
           </div>
@@ -375,7 +383,9 @@ function BookmarkCard({
         )}
       </div>
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-semibold text-lg mb-2">{bookmark.title || 'Processing...'}</h3>
+        <h3 className="font-semibold text-lg mb-2 line-clamp-2 break-words overflow-hidden">
+          {bookmark.title || 'Processing...'}
+        </h3>
         <p className="text-sm text-muted-foreground mb-4 flex-1 break-words line-clamp-3 max-h-16">
           {bookmark.description ? bookmark.description : bookmark.url}
         </p>
