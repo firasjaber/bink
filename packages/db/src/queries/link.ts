@@ -274,7 +274,18 @@ export async function selectLinkOtherAvailableTagsByLinkIds(
   return db
     .select()
     .from(linkTagTable)
-    .where(and(eq(linkTagTable.isSystem, true), notInArray(linkTagTable.id, currentLinkTags)));
+    .where(and(notInArray(linkTagTable.id, currentLinkTags), eq(linkTagTable.isSystem, true)));
+}
+
+export async function selectLinkOtherAvailableTagsByLinkIdsExcludingSystem(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  currentLinkTags: string[],
+  userId: string,
+) {
+  return db
+    .select()
+    .from(linkTagTable)
+    .where(and(notInArray(linkTagTable.id, currentLinkTags), eq(linkTagTable.userId, userId)));
 }
 
 export async function deleteLinkTagsByLinkId(
