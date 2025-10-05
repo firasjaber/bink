@@ -234,20 +234,31 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
           }),
         },
       )
-      .get('/:id/tags', async ({ params: { id } }) => {
-        const linkTags = await queries.link.selectLinkTags(drizzle, id);
-        if (linkTags.length === 0) {
-          const allSystemTags = await queries.link.selectAllSystemLinkTags(drizzle);
-          return { data: { linkTags: [], otherAvailableTags: allSystemTags } };
+      .get('/:id/tags', async ({ params: { id }, userId, error }) => {
+        console.log('get link tags', userId);
+        if (!userId) {
+          throw error('Unauthorized', 'Invalid session');
         }
 
-        const otherAvailableTags = await queries.link.selectLinkOtherAvailableTagsByLinkIds(
+        const linkTags = await queries.link.selectLinkTags(drizzle, id);
+
+        const otherAvailableSystemTags = await queries.link.selectLinkOtherAvailableTagsByLinkIds(
           drizzle,
           linkTags.map((tag) => tag.id),
         );
 
+        const otherAvailableTags =
+          await queries.link.selectLinkOtherAvailableTagsByLinkIdsExcludingSystem(
+            drizzle,
+            linkTags.map((tag) => tag.id),
+            userId,
+          );
+
         return {
-          data: { linkTags: linkTags, otherAvailableTags: otherAvailableTags },
+          data: {
+            linkTags: linkTags,
+            otherAvailableTags: [...otherAvailableSystemTags, ...otherAvailableTags],
+          },
         };
       })
       .put(
