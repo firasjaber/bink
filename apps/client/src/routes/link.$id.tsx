@@ -254,7 +254,48 @@ function Page() {
   };
 
   if (isLoading || !data) {
-    return <div>Loading...</div>;
+    return (
+      <div className="mx-auto p-4 sm:p-6 container sm:px-12">
+        <div className="flex items-center gap-2 mb-2">
+          <Skeleton className="h-10 w-10 rounded-md" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8 mt-2">
+          <div className="flex-grow space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4 rounded-sm" />
+              <Skeleton className="h-4 w-full max-w-md" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-16" />
+              <div className="flex flex-wrap gap-2">
+                <Skeleton className="h-8 w-20 rounded-sm" />
+                <Skeleton className="h-8 w-24 rounded-sm" />
+                <Skeleton className="h-8 w-16 rounded-sm" />
+              </div>
+            </div>
+          </div>
+          <div className="md:w-1/4 flex-shrink-0">
+            <Skeleton className="aspect-video w-full rounded-lg" />
+          </div>
+        </div>
+        <div className="border-t pt-6 mt-4">
+          <Skeleton className="h-6 w-16 mb-4" />
+          <Skeleton className="h-[300px] w-full rounded-md" />
+        </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-10 w-32 rounded-md" />
+            <Skeleton className="h-10 w-24 rounded-md" />
+          </div>
+          <Skeleton className="h-10 w-24 rounded-md" />
+        </div>
+      </div>
+    );
   }
 
   return (
