@@ -116,11 +116,7 @@ function Profile() {
               <Link className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Total Links</p>
-                <p className="text-2xl font-bold">
-                  {linksData?.total && Array.isArray(linksData.total) && linksData.total[0]
-                    ? linksData.total[0].count
-                    : 0}
-                </p>
+                <p className="text-2xl font-bold">{linksData?.total ? linksData.total : 0}</p>
               </div>
             </div>
           </div>
