@@ -1,6 +1,7 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import '../App.css';
+import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
 import { type AuthState, useAuthStore } from '@/stores/auth';
@@ -28,6 +29,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       <>
         <Navbar />
         <Outlet />
+        <Footer />
         {/* <TanStackRouterDevtools /> */}
       </>
     );
