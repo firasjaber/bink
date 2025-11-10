@@ -5,7 +5,12 @@ import { insertLinkSchema } from 'db/src/zod.schema';
 import Elysia, { t } from 'elysia';
 import { drizzle } from '../';
 import { getUserIdFromSession, validateSession } from '../auth';
-import { convertTextToEmbeddings, extractTextFromNotes, isURLReachable } from './helper';
+import {
+  convertTextToEmbeddings,
+  extractTextFromNotes,
+  generateNetscapeBookmarks,
+  isURLReachable,
+} from './helper';
 
 export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
   {
@@ -110,6 +115,20 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
 
         const tags = await queries.link.selectAllUserTags(drizzle, userId);
         return { data: tags };
+      })
+      .get('/export', async ({ userId, error, set }) => {
+        if (!userId) {
+          throw error('Unauthorized', 'Invalid session');
+        }
+
+        const links = await queries.link.selectAllLinksWithTagsForExport(drizzle, userId);
+
+        const netscapeHtml = generateNetscapeBookmarks(links);
+
+        set.headers['Content-Type'] = 'text/html; charset=utf-8';
+        set.headers['Content-Disposition'] = 'attachment; filename="bookmarks.html"';
+
+        return netscapeHtml;
       })
       .get(
         '/:id',

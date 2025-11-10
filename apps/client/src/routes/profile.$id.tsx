@@ -13,12 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
-import { deleteAccount, getLinks } from '@/eden';
+import { deleteAccount, exportBookmarks, getLinks } from '@/eden';
 import { useAuthStore } from '@/stores/auth';
 import { useThemeStore } from '@/stores/theme';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Link, Moon, Sun } from 'lucide-react';
+import { Download, Link, Moon, Sun } from 'lucide-react';
 import { useEffect } from 'react';
 
 export const Route = createFileRoute('/profile/$id')({
@@ -63,6 +63,23 @@ function Profile() {
     },
     onSuccess: () => {
       navigate({ to: '/' });
+    },
+  });
+
+  const { mutate: exportBookmarksMutate, isPending: isExporting } = useMutation({
+    mutationFn: exportBookmarks,
+    onSuccess: (data) => {
+      const blob = new Blob([data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'bookmarks.html';
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     },
   });
 
@@ -119,6 +136,22 @@ function Profile() {
                 <p className="text-2xl font-bold">{linksData?.total ? linksData.total : 0}</p>
               </div>
             </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-sm font-medium mb-2">Data Export</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Export all your bookmarks in Netscape Bookmark File Format (compatible with most
+              browsers).
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => exportBookmarksMutate()}
+              disabled={isExporting}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isExporting ? 'Exporting...' : 'Export Bookmarks'}
+            </Button>
           </div>
 
           <div className="border-t pt-6">

@@ -206,3 +206,13 @@ export const getAllUserTags = async () => {
   }
   return res.data?.data;
 };
+
+export const exportBookmarks = async () => {
+  const res = await client.links.export.get();
+  if (res.error) {
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to export bookmarks',
+    );
+  }
+  return res.data;
+};

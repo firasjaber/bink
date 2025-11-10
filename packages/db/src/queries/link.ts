@@ -358,3 +358,32 @@ export async function updateLinkEmbedding(
 ) {
   return db.update(linkTable).set({ embedding }).where(eq(linkTable.id, linkId));
 }
+
+export async function selectAllLinksWithTagsForExport(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  userId: string,
+) {
+  return db
+    .select({
+      id: linkTable.id,
+      url: linkTable.url,
+      title: linkTable.title,
+      description: linkTable.description,
+      createdAt: linkTable.createdAt,
+      tags: sql<Array<{ name: string; color: string }>>`
+                  COALESCE(
+                    (
+                      SELECT json_agg(
+                        json_build_object('name', ${linkTagTable.name}, 'color', ${linkTagTable.color})
+                      )
+                      FROM ${linkTagsToLinks}
+                      JOIN ${linkTagTable} ON ${linkTagsToLinks.tagId} = ${linkTagTable.id}
+                      WHERE ${linkTagsToLinks.linkId} = "link"."id"
+                    ),
+                    '[]'::json
+                  )`,
+    })
+    .from(linkTable)
+    .where(eq(linkTable.userId, userId))
+    .orderBy(desc(linkTable.createdAt));
+}

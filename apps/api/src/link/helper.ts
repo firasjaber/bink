@@ -101,3 +101,50 @@ export async function convertTextToEmbeddings(text: string) {
 
   return embedding;
 }
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+export function generateNetscapeBookmarks(
+  links: Array<{
+    url: string;
+    title: string | null;
+    description: string | null;
+    createdAt: Date;
+    tags: Array<{ name: string; color: string }> | null;
+  }>,
+): string {
+  const header = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<!-- This is an automatically generated file. -->
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>`;
+
+  const bookmarks = links
+    .map((link) => {
+      const addDate = Math.floor(link.createdAt.getTime() / 1000);
+      const title = link.title || link.url;
+      const tags = link.tags?.map((t) => t.name).join(',') || '';
+      const tagsAttr = tags ? ` TAGS="${escapeHtml(tags)}"` : '';
+
+      let html = `    <DT><A HREF="${escapeHtml(link.url)}" ADD_DATE="${addDate}"${tagsAttr}>${escapeHtml(title)}</A>`;
+
+      if (link.description) {
+        html += `\n    <DD>${escapeHtml(link.description)}`;
+      }
+
+      return html;
+    })
+    .join('\n');
+
+  const footer = '\n</DL><p>';
+
+  return header + '\n' + bookmarks + footer;
+}
