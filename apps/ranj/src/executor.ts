@@ -48,6 +48,11 @@ async function updateSuccessfulJob(job: ScrapingJob): Promise<void> {
 
 async function updateFailedJob(job: ScrapingJob, error: Error): Promise<void> {
   await queries.scrapingJobs.updateJobToFailed(db, job.id);
+  // Also update the link status to failed so it's not stuck in processing state
+  await queries.link.update(db, job.linkId, {
+    state: 'failed',
+    title: job.url, // Set the URL as the title as fallback
+  });
   logger.error(`Job ${job.id} failed: ${error.message}`);
 }
 
