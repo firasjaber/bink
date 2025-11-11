@@ -11,8 +11,8 @@ export function initLucia(drizzle: Awaited<ReturnType<typeof initDrizzle>>) {
     sessionCookie: {
       attributes: {
         secure: config.NODE_ENV === 'production',
-        sameSite: config.NODE_ENV === 'production' ? 'strict' : undefined,
-        domain: config.NODE_ENV === 'production' ? 'bink.firrj.com' : 'localhost',
+        sameSite: config.NODE_ENV === 'production' ? 'strict' : 'lax',
+        domain: config.NODE_ENV === 'production' ? 'binkapp.firrj.com' : undefined,
       },
     },
   });
