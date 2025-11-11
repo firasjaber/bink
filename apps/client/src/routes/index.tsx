@@ -333,13 +333,14 @@ function BookmarkCard({
     state?: 'processing' | 'processed' | 'failed';
   };
 }) {
-  const isProcessing = !bookmark.title;
+  const isProcessing = bookmark.state === 'processing';
+  const isFailed = bookmark.state === 'failed';
 
   return (
     <div
       className={`relative group border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-card ${
         isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-      } ${bookmark.image ? 'flex flex-col' : ''}`}
+      } ${isFailed ? 'border-yellow-500 border-2' : ''} ${bookmark.image ? 'flex flex-col' : ''}`}
     >
       <div className="relative">
         {bookmark.image ? (
@@ -354,14 +355,22 @@ function BookmarkCard({
           />
         ) : (
           <div
-            className={`w-full h-40 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center ${
+            className={`w-full h-40 ${
+              isFailed
+                ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                : 'bg-gradient-to-r from-purple-400 to-pink-500'
+            } flex items-center justify-center ${
               !isProcessing
                 ? 'transition-all duration-300 group-hover:blur-sm group-hover:brightness-80 group-hover:scale-105'
                 : ''
             }`}
           >
             <span className="text-white text-xl font-bold ">
-              {bookmark.title ? bookmark.title.charAt(0) : 'Processing...'}
+              {isProcessing
+                ? 'Processing...'
+                : bookmark.title
+                  ? bookmark.title.charAt(0)
+                  : 'L'}
             </span>
           </div>
         )}
@@ -383,8 +392,27 @@ function BookmarkCard({
         )}
       </div>
       <div className="p-4 flex-1 flex flex-col">
+        {isFailed && (
+          <div className="mb-2 flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span className="font-medium">Auto metadata scraping failed</span>
+          </div>
+        )}
         <h3 className="font-semibold text-lg mb-2 line-clamp-2 break-words overflow-hidden">
-          {bookmark.title || 'Processing...'}
+          {isProcessing ? 'Processing...' : bookmark.title || bookmark.url}
         </h3>
         <p className="text-sm text-muted-foreground mb-4 flex-1 break-words line-clamp-3 max-h-16">
           {bookmark.description ? bookmark.description : bookmark.url}
