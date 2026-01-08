@@ -174,14 +174,26 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
             priority: 1,
           };
 
-          // add the srapeOg job to the queue
           await queries.scrapingJobs.insertScrapingJob(drizzle, job);
+
+          if (body.autoTagging === true && userId) {
+            const autoTagJob = {
+              event: 'auto_tag' as const,
+              url: link.url,
+              linkId: dbLink.id,
+              priority: 0,
+              autoTagging: true,
+              userId: userId,
+            };
+            await queries.scrapingJobs.insertScrapingJob(drizzle, autoTagJob);
+          }
 
           return { status: 'success', message: 'Link created' };
         },
         {
           body: t.Object({
             url: t.String(),
+            autoTagging: t.Optional(t.Boolean()),
           }),
         },
       )
