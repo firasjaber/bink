@@ -1,6 +1,6 @@
 import * as queries from 'db/src/queries';
 import { type ScrapingJob } from 'db/src/schema';
-import { db } from './index';
+import { db } from './db';
 import { logger } from './logger';
 import { getJobHandler } from './registry';
 

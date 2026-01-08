@@ -15,3 +15,5 @@ export const LinkDataSchema = z.object({
 });
 
 export type LinkData = z.infer<typeof LinkDataSchema>;
+
+export type TagData = void;

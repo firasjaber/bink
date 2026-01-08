@@ -1,7 +1,7 @@
 import * as queries from 'db/src/queries';
 import { LinkStateEnum, type ScrapingJob, linkTable } from 'db/src/schema';
 import ogs from 'open-graph-scraper';
-import { db } from '..';
+import { db } from '../db';
 import { logger } from '../logger';
 import type { JobHandler, JobResult, LinkData } from '../types';
 import { LinkDataSchema } from '../types';
