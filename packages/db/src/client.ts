@@ -9,6 +9,7 @@ export const initDrizzle = async (connectionString: string) => {
   await client.connect();
   const db = drizzle(client, {
     schema,
+    // logger: true,
   });
   return db;
 };

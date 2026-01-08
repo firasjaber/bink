@@ -115,7 +115,7 @@ export const linkTagsToLinks = pgTable(
 );
 
 export const statusEnum = pgEnum('status', ['pending', 'processing', 'completed', 'failed']);
-export const eventEnum = pgEnum('event', ['scrape_og']); // Add more event types here as needed
+export const eventEnum = pgEnum('event', ['scrape_og', 'auto_tag']); // Add more event types here as needed
 
 export const scrapingJobs = pgTable('scraping_jobs', {
   id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
@@ -129,6 +129,8 @@ export const scrapingJobs = pgTable('scraping_jobs', {
   linkId: uuid('link_id')
     .references(() => linkTable.id, { onDelete: 'cascade' })
     .notNull(),
+  autoTagging: boolean('auto_tagging').notNull().default(false),
+  userId: uuid('user_id').references(() => userTable.id, { onDelete: 'set null' }),
 });
 
 // Create Zod schemas for insert and select
