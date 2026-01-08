@@ -62,7 +62,7 @@ export const deleteAccount = async () => {
   return res.data;
 };
 
-export const createLink = async (data: { url: string }) => {
+export const createLink = async (data: { url: string; autoTagging?: boolean }) => {
   const res = await client.links.post(data);
   if (res.error) {
     throw new Error(

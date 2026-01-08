@@ -1,6 +1,5 @@
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -10,19 +9,21 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { createLink } from '@/eden';
-import { useAuthStore } from '@/stores/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookmarkPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormField, FormItem, FormMessage } from './ui/form';
 
 const formSchema = z.object({
   link: z.string().url('Invalid URL'),
+  autoTagging: z.boolean().default(false),
 });
 
 export function AddLink() {
@@ -33,16 +34,14 @@ export function AddLink() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       link: '',
+      autoTagging: false,
     },
   });
 
-  const auth = useAuthStore();
-
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: { url: string }) => createLink(data, auth.sessionId),
+    mutationFn: (data: { url: string; autoTagging?: boolean }) => createLink(data),
     onSuccess: () => {
       setTimeout(() => form.reset(), 300);
-      // invalidate links query
       queryClient.invalidateQueries({ queryKey: ['links'] });
       setOpen(false);
     },
@@ -52,7 +51,7 @@ export function AddLink() {
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    mutate({ url: data.link });
+    mutate({ url: data.link, autoTagging: data.autoTagging });
   };
 
   return (
@@ -81,6 +80,20 @@ export function AddLink() {
                       />
                       <FormMessage />
                     </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="autoTagging"
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between py-2">
+                      <Label className="text-sm text-muted-foreground">Auto-tag with AI</Label>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
                   )}
                 />
               </form>
