@@ -1,8 +1,16 @@
 import argon from 'argon2';
 import * as queries from 'db/src/queries';
 import Elysia, { error, t } from 'elysia';
+import OpenAI from 'openai';
+import { getRemainingTrials } from '../ai/access';
 import { getUserIdFromSession, validateSession } from '../auth';
 import { drizzle, lucia } from '../index';
+
+const maskOpenAiKey = (apiKey: string | null) => {
+  if (!apiKey) return null;
+  if (apiKey.length <= 8) return '••••';
+  return `${apiKey.slice(0, 3)}...${apiKey.slice(-4)}`;
+};
 
 export const users = new Elysia({ prefix: '/users' })
   .post(
@@ -116,7 +124,83 @@ export const users = new Elysia({ prefix: '/users' })
             }
             throw error('Unauthorized', 'Invalid session');
           }
-          return { data: user };
+
+          const aiTrialsRemaining = getRemainingTrials(user.aiTrialCount ?? 0);
+
+          return {
+            data: {
+              ...user,
+              aiTrialsRemaining,
+              hasOpenAiKey: Boolean(user.openAiApiKey),
+              maskedOpenAiKey: maskOpenAiKey(user.openAiApiKey),
+            },
+          };
+        })
+        .post(
+          '/openai-key',
+          async ({ userId, body, error }) => {
+            if (!userId) {
+              throw error('Unauthorized', 'Invalid session');
+            }
+
+            const user = await queries.user.selectUserById(drizzle, userId);
+            if (!user) {
+              throw error('Unauthorized', 'Invalid session');
+            }
+
+            if (user.isPro) {
+              throw error('Bad Request', 'Pro accounts use the shared OpenAI key');
+            }
+
+            try {
+              const client = new OpenAI({ apiKey: body.apiKey });
+              await client.models.list();
+            } catch (_) {
+              throw error('Bad Request', 'Invalid OpenAI API key');
+            }
+
+            const updatedUser = await queries.user.updateUserOpenAiKey(
+              drizzle,
+              userId,
+              body.apiKey,
+            );
+
+            if (!updatedUser) {
+              throw error('Internal Server Error', 'Failed to save OpenAI key');
+            }
+
+            return {
+              data: {
+                openAiApiKey: updatedUser.openAiApiKey,
+                hasOpenAiKey: Boolean(updatedUser.openAiApiKey),
+                maskedOpenAiKey: maskOpenAiKey(updatedUser.openAiApiKey),
+              },
+            };
+          },
+          {
+            body: t.Object({
+              apiKey: t.String({ minLength: 1 }),
+            }),
+          },
+        )
+        .delete('/openai-key', async ({ userId, error }) => {
+          if (!userId) {
+            throw error('Unauthorized', 'Invalid session');
+          }
+
+          const updatedUser = await queries.user.clearUserOpenAiKey(drizzle, userId);
+
+          if (!updatedUser) {
+            throw error('Internal Server Error', 'Failed to remove OpenAI key');
+          }
+
+          return {
+            data: {
+              openAiApiKey: updatedUser.openAiApiKey,
+              hasOpenAiKey: false,
+              maskedOpenAiKey: maskOpenAiKey(updatedUser.openAiApiKey),
+            },
+          };
         })
         .delete('/delete', async ({ userId, error, headers, set }) => {
           if (!userId) {

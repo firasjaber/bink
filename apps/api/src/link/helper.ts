@@ -1,6 +1,5 @@
 import { createHash } from 'crypto';
 import OpenAI from 'openai';
-import { config } from '../config';
 import { redis } from '../redis';
 
 export async function isURLReachable(urlString: string): Promise<boolean> {
@@ -66,7 +65,7 @@ export function extractTextFromNotes(notes: TextNode | null): string {
   return text.join(' ').trim();
 }
 
-export async function convertTextToEmbeddings(text: string) {
+export async function convertTextToEmbeddings(text: string, apiKey: string) {
   // Create a hash of the text for caching
   const textHash = createHash('sha256').update(text).digest('hex');
   const cacheKey = `embedding:${textHash}`;
@@ -84,7 +83,7 @@ export async function convertTextToEmbeddings(text: string) {
   let embedding: number[];
 
   const openai = new OpenAI({
-    apiKey: config.OPENAI_API_KEY,
+    apiKey,
   });
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',

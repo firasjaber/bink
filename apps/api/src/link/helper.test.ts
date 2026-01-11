@@ -93,7 +93,7 @@ describe('convertTextToEmbeddings caching', () => {
     mockRedisGet.mockResolvedValue(JSON.stringify(cachedEmbedding));
 
     const text = 'Cached text';
-    const embeddings = await convertTextToEmbeddings(text);
+    const embeddings = await convertTextToEmbeddings(text, 'test-key');
 
     expect(embeddings).toEqual(cachedEmbedding);
 
@@ -108,7 +108,7 @@ describe('convertTextToEmbeddings caching', () => {
     mockRedisSetEx.mockResolvedValue('OK');
 
     const text = 'Text with Redis read failure';
-    const embeddings = await convertTextToEmbeddings(text);
+    const embeddings = await convertTextToEmbeddings(text, 'test-key');
 
     expect(embeddings).toBeDefined();
     expect(embeddings).toBeArray();
@@ -128,7 +128,7 @@ describe('convertTextToEmbeddings caching', () => {
     const text = 'Text with Redis write failure';
 
     // The function should not throw even if Redis write fails
-    const embeddings = await convertTextToEmbeddings(text);
+    const embeddings = await convertTextToEmbeddings(text, 'test-key');
 
     expect(embeddings).toBeDefined();
     expect(embeddings).toBeArray();
@@ -146,8 +146,8 @@ describe('convertTextToEmbeddings caching', () => {
     const text = 'Identical text';
 
     // Call twice with same text
-    await convertTextToEmbeddings(text);
-    await convertTextToEmbeddings(text);
+    await convertTextToEmbeddings(text, 'test-key');
+    await convertTextToEmbeddings(text, 'test-key');
 
     // Both calls should use the same cache key
     expect(mockRedisGet).toHaveBeenCalledTimes(2);
@@ -162,8 +162,8 @@ describe('convertTextToEmbeddings caching', () => {
     mockRedisGet.mockResolvedValue(null);
     mockRedisSetEx.mockResolvedValue('OK');
 
-    await convertTextToEmbeddings('First text');
-    await convertTextToEmbeddings('Second text');
+    await convertTextToEmbeddings('First text', 'test-key');
+    await convertTextToEmbeddings('Second text', 'test-key');
 
     // Both calls should use different cache keys
     expect(mockRedisGet).toHaveBeenCalledTimes(2);
@@ -180,7 +180,7 @@ describe('convertTextToEmbeddings caching', () => {
     mockRedisSetEx.mockResolvedValue('OK');
 
     const text = 'Text to cache with TTL check';
-    await convertTextToEmbeddings(text);
+    await convertTextToEmbeddings(text, 'test-key');
 
     // Verify caching was attempted with correct TTL
     expect(mockRedisSetEx).toHaveBeenCalledTimes(1);

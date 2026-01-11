@@ -4,6 +4,7 @@ import { LinkStateEnum } from 'db/src/schema';
 import { insertLinkSchema } from 'db/src/zod.schema';
 import Elysia, { t } from 'elysia';
 import { drizzle } from '../';
+import { consumeAiTrial, getAiAccess } from '../ai/access';
 import { getUserIdFromSession, validateSession } from '../auth';
 import {
   convertTextToEmbeddings,
@@ -42,8 +43,23 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
             const { cursor, limit = 12 } = query;
             let links = [];
             let total: { count: number }[] = [{ count: 0 }];
+            let aiTrialsRemaining: number | undefined;
+
             if (query.smartSearch && query.search) {
-              const embedding = await convertTextToEmbeddings(query.search);
+              const aiAccess = await getAiAccess(userId);
+              if (!aiAccess.apiKey) {
+                set.status = 403;
+                return {
+                  error: 'AI access requires a Pro account or your own OpenAI key',
+                };
+              }
+
+              const embedding = await convertTextToEmbeddings(query.search, aiAccess.apiKey);
+
+              if (aiAccess.shouldConsumeTrial) {
+                aiTrialsRemaining = await consumeAiTrial(userId);
+              }
+
               const { total: resultTotal, links: resultLinks } =
                 await queries.link.selectLinksByEmbeddingSimilarity(
                   drizzle,
@@ -89,6 +105,7 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
               data: results,
               nextCursor,
               total: total[0]?.count || 0,
+              aiTrialsRemaining,
             };
           } catch (error) {
             log.error(error, 'Error getting links');
@@ -177,15 +194,18 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
           await queries.scrapingJobs.insertScrapingJob(drizzle, job);
 
           if (body.autoTagging === true && userId) {
-            const autoTagJob = {
-              event: 'auto_tag' as const,
-              url: link.url,
-              linkId: dbLink.id,
-              priority: 0,
-              autoTagging: true,
-              userId: userId,
-            };
-            await queries.scrapingJobs.insertScrapingJob(drizzle, autoTagJob);
+            const aiAccess = await getAiAccess(userId);
+            if (aiAccess.apiKey) {
+              const autoTagJob = {
+                event: 'auto_tag' as const,
+                url: link.url,
+                linkId: dbLink.id,
+                priority: 0,
+                autoTagging: true,
+                userId: userId,
+              };
+              await queries.scrapingJobs.insertScrapingJob(drizzle, autoTagJob);
+            }
           }
 
           return { status: 'success', message: 'Link created' };
@@ -324,15 +344,34 @@ export const links = new Elysia({ prefix: '/links' }).use(logger()).guard(
           if (!userId) {
             throw error('Unauthorized', 'Invalid session');
           }
+          const aiAccess = await getAiAccess(userId);
+          if (!aiAccess.apiKey) {
+            set.status = 403;
+            return {
+              status: 'error',
+              message: 'AI access requires a Pro account or your own OpenAI key',
+            };
+          }
+
           // Get all the users links with the embeddings not set
           const links = await queries.link.selectLinksByUserIdWithoutEmbedding(drizzle, userId);
+          let updatedEmbeddings = false;
+
           for (const link of links) {
             const embeddings = await convertTextToEmbeddings(
               link.title + ' ' + link.description + ' ' + link.notesText,
+              aiAccess.apiKey,
             );
             await queries.link.updateLinkEmbedding(drizzle, link.id, embeddings);
+            updatedEmbeddings = true;
           }
-          return { status: 'success', message: 'Embeddings updated' };
+
+          let aiTrialsRemaining: number | undefined;
+          if (aiAccess.shouldConsumeTrial && updatedEmbeddings) {
+            aiTrialsRemaining = await consumeAiTrial(userId);
+          }
+
+          return { status: 'success', message: 'Embeddings updated', aiTrialsRemaining };
         } catch (error) {
           log.error(error, 'Error updating embeddings');
           set.status = 500;
