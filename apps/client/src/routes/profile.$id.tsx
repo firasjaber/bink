@@ -13,13 +13,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
-import { deleteAccount, exportBookmarks, getLinks } from '@/eden';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { deleteAccount, deleteOpenAiKey, exportBookmarks, getLinks, saveOpenAiKey } from '@/eden';
 import { useAuthStore } from '@/stores/auth';
 import { useThemeStore } from '@/stores/theme';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Download, Link, Moon, Sun } from 'lucide-react';
-import { useEffect } from 'react';
+import { Copy, Download, KeyRound, Link, Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Toaster, toast } from 'sonner';
 
 export const Route = createFileRoute('/profile/$id')({
   component: Profile,
@@ -40,9 +43,16 @@ function Profile() {
     document.title = 'Bink - Profile';
   }, []);
 
-  const { user, logout } = useAuthStore((state) => state);
+  const { user, logout, updateUser } = useAuthStore((state) => state);
   const { theme, toggleTheme } = useThemeStore((state) => state);
   const navigate = Route.useNavigate();
+  const [openAiKey, setOpenAiKey] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setOpenAiKey(user.openAiApiKey ?? '');
+    }
+  }, [user]);
 
   const { data: linksData } = useQuery({
     queryKey: ['links', 'count'],
@@ -83,9 +93,54 @@ function Profile() {
     },
   });
 
+  const { mutate: saveOpenAiKeyMutate, isPending: isSavingKey } = useMutation({
+    mutationFn: (apiKey: string) => saveOpenAiKey(apiKey),
+    onSuccess: (data) => {
+      if (!data) return;
+      updateUser({
+        openAiApiKey: data.openAiApiKey ?? null,
+        hasOpenAiKey: data.hasOpenAiKey,
+        maskedOpenAiKey: data.maskedOpenAiKey ?? null,
+      });
+      setOpenAiKey(data.openAiApiKey ?? '');
+      toast.success('OpenAI key saved');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: deleteOpenAiKeyMutate, isPending: isDeletingKey } = useMutation({
+    mutationFn: deleteOpenAiKey,
+    onSuccess: (data) => {
+      updateUser({
+        openAiApiKey: data?.openAiApiKey ?? null,
+        hasOpenAiKey: false,
+        maskedOpenAiKey: data?.maskedOpenAiKey ?? null,
+      });
+      setOpenAiKey('');
+      toast.success('OpenAI key removed');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleCopyKey = async () => {
+    if (!user?.openAiApiKey) return;
+    await navigator.clipboard.writeText(user.openAiApiKey);
+    toast.success('OpenAI key copied');
+  };
+
   if (!user) {
     return <FullScreenLoading />;
   }
+
+  const isProAccount = user.isPro;
+  const aiTrialsRemaining = user.aiTrialsRemaining ?? 0;
+  const hasOpenAiKey = user.hasOpenAiKey;
+  const canSaveKey =
+    !isProAccount && openAiKey.trim().length > 0 && openAiKey !== (user.openAiApiKey ?? '');
 
   const getInitials = () => {
     return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
@@ -93,6 +148,7 @@ function Profile() {
 
   return (
     <div className="container max-w-2xl mx-auto py-8 px-4">
+      <Toaster richColors />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -135,6 +191,67 @@ function Profile() {
                 <p className="text-sm font-medium">Total Links</p>
                 <p className="text-2xl font-bold">{linksData?.total ? linksData.total : 0}</p>
               </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">AI Access</p>
+                <p className="text-sm text-muted-foreground">
+                  {isProAccount ? 'Pro account' : 'Free account'}
+                  {isProAccount
+                    ? ' · Unlimited usage'
+                    : ` · ${aiTrialsRemaining} free trial${aiTrialsRemaining !== 1 ? 's' : ''} remaining`}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="openai-key">OpenAI API key</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="openai-key"
+                  type="password"
+                  value={openAiKey}
+                  onChange={(event) => setOpenAiKey(event.target.value)}
+                  disabled={isProAccount}
+                  placeholder={hasOpenAiKey ? (user.maskedOpenAiKey ?? '••••') : 'sk-...'}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyKey}
+                  disabled={!user.openAiApiKey}
+                  aria-label="Copy OpenAI key"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isProAccount
+                  ? 'Pro accounts use the shared OpenAI key.'
+                  : hasOpenAiKey
+                    ? `Saved key: ${user.maskedOpenAiKey ?? '••••'}`
+                    : 'Add your own key for unlimited AI usage.'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => saveOpenAiKeyMutate(openAiKey)}
+                disabled={!canSaveKey || isSavingKey || isProAccount}
+              >
+                {isSavingKey ? 'Saving...' : hasOpenAiKey ? 'Update Key' : 'Save Key'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => deleteOpenAiKeyMutate()}
+                disabled={!hasOpenAiKey || isDeletingKey || isProAccount}
+              >
+                {isDeletingKey ? 'Removing...' : 'Remove Key'}
+              </Button>
             </div>
           </div>
 

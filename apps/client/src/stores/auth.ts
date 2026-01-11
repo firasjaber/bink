@@ -10,10 +10,17 @@ export interface AuthState {
     email: string;
     createdAt: Date;
     profilePicture: string | null;
+    isPro: boolean;
+    openAiApiKey: string | null;
+    aiTrialCount: number;
+    aiTrialsRemaining: number;
+    hasOpenAiKey: boolean;
+    maskedOpenAiKey: string | null;
   } | null;
   isLoading: boolean;
   setUser: () => Promise<void>;
   initAuth: () => Promise<void>;
+  updateUser: (data: Partial<NonNullable<AuthState['user']>>) => void;
   logout: () => void;
 }
 
@@ -43,6 +50,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ ...initialState, isLoading: false });
     }
   },
+  updateUser: (data) =>
+    set((state) => {
+      if (!state.user) return state;
+      return { ...state, user: { ...state.user, ...data } };
+    }),
   logout: async () => {
     await logout();
     set({ ...initialState, isLoading: false });

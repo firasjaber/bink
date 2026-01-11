@@ -62,6 +62,26 @@ export const deleteAccount = async () => {
   return res.data;
 };
 
+export const saveOpenAiKey = async (apiKey: string) => {
+  const res = await client.users['openai-key'].post({ apiKey });
+  if (res.error) {
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to save OpenAI key',
+    );
+  }
+  return res.data?.data;
+};
+
+export const deleteOpenAiKey = async () => {
+  const res = await client.users['openai-key'].delete();
+  if (res.error) {
+    throw new Error(
+      typeof res.error.value === 'string' ? res.error.value : 'Failed to delete OpenAI key',
+    );
+  }
+  return res.data?.data;
+};
+
 export const createLink = async (data: { url: string; autoTagging?: boolean }) => {
   const res = await client.links.post(data);
   if (res.error) {
@@ -170,6 +190,7 @@ export const updateLinkEmbeddings = async () => {
       typeof res.error.value === 'string' ? res.error.value : 'Failed to update embeddings',
     );
   }
+  return res.data;
 };
 
 export const getGoogleAuthUrl = async () => {

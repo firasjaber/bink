@@ -1,5 +1,4 @@
 import { AddLink } from '@/components/addLink';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FullScreenLoading } from '@/components/ui/full-screen-loading';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { getAllUserTags, getLinks, updateLinkEmbeddings } from '@/eden';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth';
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
 import {
@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Toaster, toast } from 'sonner';
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -48,6 +49,14 @@ function Index() {
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [hasInitializedTags, setHasInitializedTags] = useState(false);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const { user, updateUser } = useAuthStore((state) => state);
+  const isFreeAccount = Boolean(user && !user.isPro && !user.hasOpenAiKey);
+  const hasAiAccess = Boolean(
+    user && (user.isPro || user.hasOpenAiKey || user.aiTrialsRemaining > 0),
+  );
+  const smartSearchTooltip = !hasAiAccess
+    ? 'AI access requires a Pro account or your own OpenAI key.'
+    : 'Smart search will use AI for context aware and similarity search capabilities';
 
   const { mutateAsync: updateLinkEmbeddingsMutation, isPending: isUpdatingEmbeddings } =
     useMutation({
@@ -67,11 +76,24 @@ function Index() {
     }
   }, [allTags, hasInitializedTags]);
 
-  const handleSmartSearchToggle = async () => {
-    if (!isSmartSearch) {
-      await updateLinkEmbeddingsMutation();
+  const handleSmartSearchToggle = async (nextValue: boolean) => {
+    if (nextValue) {
+      try {
+        const response = await updateLinkEmbeddingsMutation();
+        if (isFreeAccount && response?.aiTrialsRemaining !== undefined) {
+          updateUser({ aiTrialsRemaining: response.aiTrialsRemaining });
+          toast.success(
+            `Smart Search used one free trial. ${response.aiTrialsRemaining} remaining.`,
+          );
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to update smart search embeddings';
+        toast.error(message);
+        return;
+      }
     }
-    setIsSmartSearch(!isSmartSearch);
+    setIsSmartSearch(nextValue);
     setSearchTerm('');
   };
 
@@ -154,8 +176,19 @@ function Index() {
 
   const links = linksQuery.data?.pages.flatMap((page) => page.data);
 
+  useEffect(() => {
+    if (!isFreeAccount || !linksQuery.data) return;
+    const remaining = linksQuery.data.pages
+      .map((page) => page.aiTrialsRemaining)
+      .find((value) => value !== undefined);
+    if (remaining !== undefined && remaining !== user?.aiTrialsRemaining) {
+      updateUser({ aiTrialsRemaining: remaining });
+    }
+  }, [isFreeAccount, linksQuery.data, updateUser, user?.aiTrialsRemaining]);
+
   return (
     <div className="flex flex-col container mx-auto overflow-auto max-h-[calc(100vh-73px)] mb-10 px-1 sm:px-[2rem]">
+      <Toaster richColors />
       <main className="flex-1 p-4">
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <div className="relative w-full sm:flex-1 flex items-center">
@@ -184,15 +217,13 @@ function Index() {
                       <Switch
                         checked={isSmartSearch}
                         onCheckedChange={handleSmartSearchToggle}
-                        disabled={isUpdatingEmbeddings}
-                        className={`${isUpdatingEmbeddings ? 'opacity-50 cursor-wait' : ''}`}
+                        disabled={isUpdatingEmbeddings || !hasAiAccess}
+                        className={`${isUpdatingEmbeddings || !hasAiAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
                       />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>
-                      Smart search will use AI for context aware and similarity search capabilities
-                    </p>
+                    <p>{smartSearchTooltip}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -366,11 +397,7 @@ function BookmarkCard({
             }`}
           >
             <span className="text-white text-xl font-bold ">
-              {isProcessing
-                ? 'Processing...'
-                : bookmark.title
-                  ? bookmark.title.charAt(0)
-                  : 'L'}
+              {isProcessing ? 'Processing...' : bookmark.title ? bookmark.title.charAt(0) : 'L'}
             </span>
           </div>
         )}
