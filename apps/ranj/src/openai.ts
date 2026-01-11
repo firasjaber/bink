@@ -12,24 +12,23 @@ export async function generateTagSuggestions(
   title: string,
   description: string | undefined,
   availableTags: Tag[],
+  apiKey: string,
 ): Promise<string[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    logger.warn('OPENAI_API_KEY not set, auto-tagging will be skipped');
+    logger.warn('OpenAI API key not set, auto-tagging will be skipped');
     return [];
   }
 
-  try {
-    const client = new OpenAI({ apiKey });
-    const tagNames = availableTags.map((tag) => tag.name);
-    const tagNamesString = JSON.stringify(tagNames);
+  const client = new OpenAI({ apiKey });
+  const tagNames = availableTags.map((tag) => tag.name);
+  const tagNamesString = JSON.stringify(tagNames);
 
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a helpful assistant that selects relevant tags for web links.
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `You are a helpful assistant that selects relevant tags for web links.
 
 Available tags: ${tagNamesString}
 
@@ -40,25 +39,21 @@ Rules:
 4. Return as JSON array of tag names (strings)
 5. If less than 2 tags are relevant, return as many as are relevant
 6. Do not invent new tags`,
-        },
-        {
-          role: 'user',
-          content: `Title: ${title}\nDescription: ${description || 'No description'}`,
-        },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    });
+      },
+      {
+        role: 'user',
+        content: `Title: ${title}\nDescription: ${description || 'No description'}`,
+      },
+    ],
+    temperature: 0.3,
+    response_format: { type: 'json_object' },
+  });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) return [];
+  const content = response.choices[0]?.message?.content;
+  if (!content) return [];
 
-    const parsed = JSON.parse(content);
-    const suggestedTagNames = parsed.tags || [];
+  const parsed = JSON.parse(content);
+  const suggestedTagNames = parsed.tags || [];
 
-    return suggestedTagNames.filter((tagName: string) => tagNames.includes(tagName));
-  } catch (error) {
-    logger.error('Failed to generate tag suggestions:', error);
-    return [];
-  }
+  return suggestedTagNames.filter((tagName: string) => tagNames.includes(tagName));
 }
