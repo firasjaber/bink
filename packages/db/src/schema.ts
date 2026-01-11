@@ -24,6 +24,9 @@ export const userTable = pgTable('user', {
   password: text('password'),
   googleId: varchar('google_id'),
   profilePicture: text('profile_picture'),
+  isPro: boolean('is_pro').notNull().default(false),
+  openAiApiKey: text('openai_api_key'),
+  aiTrialCount: integer('ai_trial_count').notNull().default(0),
   createdAt: timestamp('created_at', {
     withTimezone: true,
     mode: 'date',

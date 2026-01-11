@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { initDrizzle } from '../client';
 import { userTable } from '../schema';
 
@@ -69,4 +69,56 @@ export async function insertUser(
 
 export async function deleteUser(db: Awaited<ReturnType<typeof initDrizzle>>, userId: string) {
   await db.delete(userTable).where(eq(userTable.id, userId));
+}
+
+export async function updateUserOpenAiKey(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  userId: string,
+  apiKey: string,
+) {
+  const user = await db
+    .update(userTable)
+    .set({ openAiApiKey: apiKey })
+    .where(eq(userTable.id, userId))
+    .returning();
+
+  if (user.length === 0) {
+    return null;
+  }
+
+  return user[0];
+}
+
+export async function clearUserOpenAiKey(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  userId: string,
+) {
+  const user = await db
+    .update(userTable)
+    .set({ openAiApiKey: null })
+    .where(eq(userTable.id, userId))
+    .returning();
+
+  if (user.length === 0) {
+    return null;
+  }
+
+  return user[0];
+}
+
+export async function incrementUserAiTrialCount(
+  db: Awaited<ReturnType<typeof initDrizzle>>,
+  userId: string,
+) {
+  const user = await db
+    .update(userTable)
+    .set({ aiTrialCount: sql`${userTable.aiTrialCount} + 1` })
+    .where(eq(userTable.id, userId))
+    .returning();
+
+  if (user.length === 0) {
+    return null;
+  }
+
+  return user[0];
 }
