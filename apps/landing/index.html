@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bink</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#ec5b13',
+              'background-light': '#f8f6f6',
+            },
+            fontFamily: {
+              display: ['Public Sans', 'sans-serif'],
+            },
+            boxShadow: {
+              glow: '0 20px 45px -20px rgba(236, 91, 19, 0.35)',
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: 'Public Sans', sans-serif;
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body class="bg-background-light text-slate-900 font-display">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      <header class="sticky top-0 z-50 border-b border-slate-200 bg-background-light/90 backdrop-blur-md">
+        <div class="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 lg:px-20">
+          <div class="flex items-center gap-3">
+            <div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/20">
+              <span class="material-symbols-outlined text-[20px]">bookmark_manager</span>
+            </div>
+            <div>
+              <p class="text-lg font-bold tracking-tight">Bink</p>
+              <p class="text-xs text-slate-500">AI-powered bookmark management</p>
+            </div>
+          </div>
+          <a
+            href="$LANDING_APP_URL"
+            target="_blank"
+            rel="noreferrer"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-glow"
+          >
+            Open the app
+          </a>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <section class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16 lg:px-20 lg:py-24">
+          <div class="flex flex-col items-center gap-8 text-center">
+            <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+              <span class="material-symbols-outlined text-base">code</span>
+              Open source project
+            </div>
+            <div class="max-w-4xl space-y-5">
+              <h1 class="text-5xl font-black leading-tight tracking-tight text-slate-950 lg:text-7xl">
+                Save links like bookmarks. <span class="text-primary">Find them like knowledge.</span>
+              </h1>
+              <p class="mx-auto max-w-3xl text-lg leading-8 text-slate-600 lg:text-xl">
+                Paste a link, and Bink turns it into something you can actually retrieve later. It keeps the page context, your tags, and your notes in one place, then lets AI search do the remembering.
+              </p>
+            </div>
+            <div class="flex w-full flex-col justify-center gap-4 sm:flex-row">
+              <a
+                href="$LANDING_APP_URL"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex h-14 items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold text-white shadow-glow transition hover:-translate-y-0.5"
+              >
+                Get started for free
+              </a>
+              <a
+                href="$LANDING_GITHUB_URL"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex h-14 items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-8 text-lg font-bold text-slate-900 transition hover:border-primary/40 hover:text-primary"
+              >
+                View on GitHub
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="border-y border-slate-200/80 bg-slate-100/80 py-12">
+          <div class="mx-auto mb-8 flex w-full max-w-7xl flex-col gap-5 px-6 lg:flex-row lg:items-end lg:justify-between lg:px-20">
+            <div class="max-w-2xl space-y-3">
+              <h2 class="text-2xl font-bold tracking-tight text-slate-950">Experience the Interface</h2>
+              <p class="text-base leading-7 text-slate-600">
+                A quick look at how saving, searching, and revisiting bookmarks feels inside Bink.
+              </p>
+            </div>
+            <div class="hidden items-center gap-3 text-sm font-semibold text-slate-500 md:flex">
+              <span data-carousel-step>Step 1 of 3</span>
+              <div class="flex items-center gap-2">
+                <button type="button" data-carousel-dot="0" aria-label="Go to screenshot 1" class="h-2.5 w-8 rounded-full bg-primary transition"></button>
+                <button type="button" data-carousel-dot="1" aria-label="Go to screenshot 2" class="h-2.5 w-2.5 rounded-full bg-slate-300 transition"></button>
+                <button type="button" data-carousel-dot="2" aria-label="Go to screenshot 3" class="h-2.5 w-2.5 rounded-full bg-slate-300 transition"></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto px-6 pb-4 lg:px-20" data-carousel>
+            <article class="w-[85vw] max-w-4xl flex-none snap-center" data-carousel-slide>
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/70">
+                <div class="flex h-8 items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4">
+                  <div class="size-2.5 rounded-full bg-red-400"></div>
+                  <div class="size-2.5 rounded-full bg-amber-400"></div>
+                  <div class="size-2.5 rounded-full bg-emerald-400"></div>
+                </div>
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5BOGdKFB1aAp4qINJSo6lPyi64eyD4HQ8CT2mrQQfHgpX1SXXmcinphKKyxB1uIyGCLlXQ1adI2GAWnjDe80d_eVtMYtyfm3PCJ4OE45QR39kZFhVGlwfqQczoYQF6ksE-BDdNNc1bZmL0PXecRF4XukSXMAnmsBTT8tATqPlZPu6KVrUvd1wwVN9b7MazOyz_lwv9Riik9P7zzo6k2vEErla_Ug9OTFQgeO4KP3Gzdkbeg3wAsFWDDUXSXAVFzxVMnCm8jPfeWXH"
+                  alt="Bink dashboard showing saved bookmarks and cards"
+                  class="aspect-video w-full object-cover"
+                />
+              </div>
+              <div class="mt-4 space-y-1">
+                <h3 class="text-lg font-bold text-slate-950">Bookmark dashboard</h3>
+                <p class="text-sm leading-6 text-slate-500">
+                  Save new links, scan context fast, and keep your library readable at a glance.
+                </p>
+              </div>
+            </article>
+
+            <article class="w-[85vw] max-w-4xl flex-none snap-center" data-carousel-slide>
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/70">
+                <div class="flex h-8 items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4">
+                  <div class="size-2.5 rounded-full bg-red-400"></div>
+                  <div class="size-2.5 rounded-full bg-amber-400"></div>
+                  <div class="size-2.5 rounded-full bg-emerald-400"></div>
+                </div>
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz4MtawVV0ohxFHoVLZlgqTlMIe0J2BgKOXpzP6nySpD434FKI84DpawOvcSMmlfR1JlQGivmr-FHUbNBQvMKlWkuAdmFTC5hEZsrHufsxkTcnxQc66tH-N5SyTaLHvbUV1_c0YZyq9g4wIBMZ2rxfHwHWW4sDLU-X6piNRXOSCKe-yJjaD8IWu7o9G_SsTSL_CtNaPbpblv8S5MKtzMXgMV7SGn32YOsqZBszpADU6QQ7DU3sDShFXcpOc1aJQeRkDHlQNmPj4BgE"
+                  alt="Bink search view showing semantic results"
+                  class="aspect-video w-full object-cover"
+                />
+              </div>
+              <div class="mt-4 space-y-1">
+                <h3 class="text-lg font-bold text-slate-950">Semantic search</h3>
+                <p class="text-sm leading-6 text-slate-500">
+                  Find pages by meaning, related phrases, or the way you remember them.
+                </p>
+              </div>
+            </article>
+
+            <article class="w-[85vw] max-w-4xl flex-none snap-center" data-carousel-slide>
+              <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/70">
+                <div class="flex h-8 items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4">
+                  <div class="size-2.5 rounded-full bg-red-400"></div>
+                  <div class="size-2.5 rounded-full bg-amber-400"></div>
+                  <div class="size-2.5 rounded-full bg-emerald-400"></div>
+                </div>
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4sdY7rSck6j1CEIBuuLmuje_yfB56F0ahEaF3MIO0YFv4QDk7T-MjLqVioKU8K8qHeOZ54YzEb4yLg4VrUAtCyzfLTwSKvCuctcslGbhP-SkHeTpyx6F3LB3Sw9YdPmB4Fxm5PzqAOlmVkjOPLT3FasadEqb4wAXUzU0QpPCxThljTPgroEDdzl0jM74xHVsZNgZFZVtGexGP_BSwS9FrK9DPiYZe3v8XPQJP4_9xnqQocxHgPjcBpbUfd8KUOiAnR9KJ3z-wMOHO"
+                  alt="Bink bookmark detail showing tags and organization"
+                  class="aspect-video w-full object-cover"
+                />
+              </div>
+              <div class="mt-4 space-y-1">
+                <h3 class="text-lg font-bold text-slate-950">Context-rich details</h3>
+                <p class="text-sm leading-6 text-slate-500">
+                  Keep tags, notes, and the original source connected in one clean place.
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div class="mx-auto mt-4 flex w-full max-w-7xl items-center justify-between gap-4 px-6 md:hidden lg:px-20">
+            <span class="text-sm font-semibold text-slate-500" data-carousel-step>Step 1 of 3</span>
+            <div class="flex items-center gap-2">
+              <button type="button" data-carousel-dot="0" aria-label="Go to screenshot 1" class="h-2.5 w-8 rounded-full bg-primary transition"></button>
+              <button type="button" data-carousel-dot="1" aria-label="Go to screenshot 2" class="h-2.5 w-2.5 rounded-full bg-slate-300 transition"></button>
+              <button type="button" data-carousel-dot="2" aria-label="Go to screenshot 3" class="h-2.5 w-2.5 rounded-full bg-slate-300 transition"></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="mx-auto flex w-full max-w-7xl flex-col gap-12 px-6 py-20 lg:px-20">
+          <div class="max-w-3xl space-y-4">
+            <h2 class="text-4xl font-black leading-tight tracking-tight text-slate-950 lg:text-5xl">Core features, sharper framing</h2>
+            <p class="text-lg leading-8 text-slate-600">Same four pillars, just with a different angle on what makes Bink practical every day, plus clearer messaging for hosting and Pro access.</p>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">travel_explore</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Auto capture</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Auto-scraping that saves the useful bits</h3>
+                <p class="leading-7 text-slate-600">Drop in a URL and Bink brings back the page title, metadata, and readable content so each bookmark starts with enough context to be recognizable later.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Fast intake</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Context first</span>
+              </div>
+            </article>
+
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">manage_search</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">AI retrieval</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Search by meaning instead of exact wording</h3>
+                <p class="leading-7 text-slate-600">When your memory is close but not precise, Bink can still surface the right bookmark through related language, fuzzy phrasing, and semantic similarity.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Intent aware</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Less exact recall</span>
+              </div>
+            </article>
+
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">sell</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Simple organization</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Tags that help without getting in the way</h3>
+                <p class="leading-7 text-slate-600">Use lightweight tags to group work by topic, project, or theme without turning your bookmark flow into a maintenance routine.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Project friendly</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Low overhead</span>
+              </div>
+            </article>
+
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">edit_note</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Personal layer</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Notes that stay attached to the source</h3>
+                <p class="leading-7 text-slate-600">Capture your takeaway, next step, or why-this-matters thought right beside the bookmark so the context stays useful when you revisit it.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Why it mattered</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Keep the takeaway</span>
+              </div>
+            </article>
+
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">dns</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Open source</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Self host it or use hosted with your own key</h3>
+                <p class="leading-7 text-slate-600">Bink is open source and straightforward to self host if you want to manage the stack yourself. If not, you can use the hosted app and bring your own AI API key.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Deploy yourself</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Bring your own AI key</span>
+              </div>
+            </article>
+
+            <article class="flex h-full flex-col gap-5 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span class="material-symbols-outlined">workspace_premium</span>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Pro access</span>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-xl font-bold text-slate-950">Free by default, Pro when you need more AI</h3>
+                <p class="leading-7 text-slate-600">You can use Bink for free today. AI-powered usage is limited on the free tier, and unlimited access is available through a Pro account if you contact us.</p>
+              </div>
+              <div class="mt-auto flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1">Free plan available</span>
+                <span class="rounded-full bg-slate-100 px-3 py-1">Upgrade by contact</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="border-y border-slate-200 bg-slate-50 py-24">
+          <div class="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 px-6 text-center lg:px-8">
+            <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+              <span class="material-symbols-outlined text-base">diversity_3</span>
+              Feedback welcome
+            </div>
+            <h2 class="text-4xl font-black leading-tight tracking-tight text-slate-950 lg:text-5xl">Bink is open source, and the roadmap is open too</h2>
+            <p class="text-lg leading-8 text-slate-600">If you have a recommendation, rough idea, or feature request, GitHub issues are the main point of contact. You can inspect the code, try the app, and help shape what comes next.</p>
+            <div class="flex w-full flex-col justify-center gap-4 sm:flex-row">
+              <a
+                href="$LANDING_GITHUB_ISSUES_URL"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex h-14 items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold text-white shadow-glow transition hover:-translate-y-0.5"
+              >
+                Open an issue
+              </a>
+              <a
+                href="$LANDING_GITHUB_URL"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex h-14 items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-8 text-lg font-bold text-slate-900 transition hover:border-primary/40 hover:text-primary"
+              >
+                View the code
+              </a>
+            </div>
+            <p class="text-sm font-medium text-slate-500">
+              Recommendations, bugs, and feature requests all belong in GitHub issues.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="bg-white">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-10 lg:flex-row lg:items-center lg:justify-between lg:px-20">
+          <div class="flex items-center gap-3">
+            <div class="flex size-8 items-center justify-center rounded-lg bg-primary text-white">
+              <span class="material-symbols-outlined text-[18px]">bookmark_manager</span>
+            </div>
+            <div>
+              <p class="text-base font-bold tracking-tight">Bink</p>
+              <p class="text-sm text-slate-500">Open source bookmark management with AI-powered search.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-5 text-sm font-medium text-slate-500">
+            <a href="$LANDING_APP_URL" target="_blank" rel="noreferrer" class="transition hover:text-primary">Live app</a>
+            <a href="$LANDING_GITHUB_URL" target="_blank" rel="noreferrer" class="transition hover:text-primary">GitHub</a>
+            <a href="$LANDING_GITHUB_ISSUES_URL" target="_blank" rel="noreferrer" class="transition hover:text-primary">Open an issue</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const carousel = document.querySelector('[data-carousel]');
+      const slides = carousel ? Array.from(carousel.querySelectorAll('[data-carousel-slide]')) : [];
+      const dots = Array.from(document.querySelectorAll('[data-carousel-dot]'));
+      const stepLabels = Array.from(document.querySelectorAll('[data-carousel-step]'));
+
+      if (carousel && slides.length) {
+        let ticking = false;
+
+        const updateActiveSlide = () => {
+          const carouselRect = carousel.getBoundingClientRect();
+          const viewportCenter = carouselRect.left + carouselRect.width / 2;
+          let activeIndex = 0;
+          let smallestDistance = Number.POSITIVE_INFINITY;
+
+          slides.forEach((slide, index) => {
+            const rect = slide.getBoundingClientRect();
+            const slideCenter = rect.left + rect.width / 2;
+            const distance = Math.abs(slideCenter - viewportCenter);
+
+            if (distance < smallestDistance) {
+              smallestDistance = distance;
+              activeIndex = index;
+            }
+          });
+
+          stepLabels.forEach((label) => {
+            label.textContent = 'Step ' + (activeIndex + 1) + ' of ' + slides.length;
+          });
+
+          dots.forEach((dot) => {
+            const dotIndex = Number(dot.getAttribute('data-carousel-dot'));
+            const isActive = dotIndex === activeIndex;
+            dot.classList.toggle('bg-primary', isActive);
+            dot.classList.toggle('w-8', isActive);
+            dot.classList.toggle('bg-slate-300', !isActive);
+            dot.classList.toggle('w-2.5', !isActive);
+          });
+
+          ticking = false;
+        };
+
+        const requestUpdate = () => {
+          if (ticking) {
+            return;
+          }
+
+          ticking = true;
+          window.requestAnimationFrame(updateActiveSlide);
+        };
+
+        dots.forEach((dot) => {
+          const dotIndex = Number(dot.getAttribute('data-carousel-dot'));
+          dot.addEventListener('click', () => {
+            const slide = slides[dotIndex];
+            if (slide) {
+              slide.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+          });
+        });
+
+        carousel.addEventListener('scroll', requestUpdate, { passive: true });
+        window.addEventListener('resize', requestUpdate);
+        updateActiveSlide();
+      }
+    </script>
+  </body>
+</html>

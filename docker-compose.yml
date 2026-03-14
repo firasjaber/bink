@@ -47,6 +47,20 @@ services:
     networks:
       - bink-network
 
+  landing:
+    container_name: landing
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.landing
+    environment:
+      LANDING_APP_URL: ${LANDING_APP_URL:-https://binkapp.firrj.com}
+      LANDING_GITHUB_URL: ${LANDING_GITHUB_URL:-https://github.com/firasjaber/bink}
+      LANDING_GITHUB_ISSUES_URL: ${LANDING_GITHUB_ISSUES_URL:-https://github.com/firasjaber/bink/issues/new}
+    ports:
+      - "8080:80"
+    networks:
+      - bink-network
+
   bink-db:
     container_name: bink-db
     image: ankane/pgvector:v0.5.1
