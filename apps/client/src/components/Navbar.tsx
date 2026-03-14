@@ -4,10 +4,14 @@ import { Link } from '@tanstack/react-router';
 
 export function Navbar() {
   return (
-    <header className="flex justify-between p-4 border-b container">
-      <Link to="/" className="flex items-center space-x-2">
-        <img src="/logo.png" alt="Bink Logo" className="h-8 w-auto" />
-        <span className="text-xl font-bold">Bink</span>
+    <header className="flex justify-between px-6 py-4 lg:px-20 border-b container">
+      <Link to="/" className="flex items-center space-x-3">
+        <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/20">
+          <span className="material-symbols-outlined text-[20px]">bookmark_manager</span>
+        </div>
+        <div>
+          <p className="text-lg font-bold tracking-tight">Bink</p>
+        </div>
       </Link>
       <UserAvatar />
     </header>

@@ -8,13 +8,13 @@
 
 @layer base {
   :root {
-    --background: 0 0% 99.2157%;
+    --background: 0 14.3% 96.9%;
     --foreground: 0 0% 0%;
     --card: 0 0% 99.2157%;
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 98.8235%;
     --popover-foreground: 0 0% 0%;
-    --primary: 257.9412 100% 60%;
+    --primary: 20 85.5% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 214.2857 24.1379% 94.3137%;
     --secondary-foreground: 0 0% 3.1373%;
@@ -40,10 +40,10 @@
     --sidebar-accent-foreground: 0 0% 0%;
     --sidebar-border: 0 0% 92.1569%;
     --sidebar-ring: 0 0% 0%;
-    --font-sans: Plus Jakarta Sans, sans-serif;
+    --font-sans: "Public Sans", sans-serif;
     --font-serif: Lora, serif;
     --font-mono: IBM Plex Mono, monospace;
-    --radius: 0.325rem;
+    --radius: 1rem;
     --shadow-x: 0px;
     --shadow-y: 2px;
     --shadow-blur: 3px;
@@ -69,7 +69,7 @@
     --card-foreground: 0 0% 94.1176%;
     --popover: 228.0 6.8493% 14.3137%;
     --popover-foreground: 0 0% 94.1176%;
-    --primary: 257.6687 100% 68.0392%;
+    --primary: 20 85.5% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 226.6667 9.6774% 18.2353%;
     --secondary-foreground: 0 0% 94.1176%;
@@ -81,7 +81,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 222.8571 6.4220% 21.3725%;
     --input: 222.8571 6.4220% 21.3725%;
-    --ring: 257.6687 100% 68.0392%;
+    --ring: 20 85.5% 50%;
     --chart-1: 141.8919 69.1589% 58.0392%;
     --chart-2: 257.6687 100% 68.0392%;
     --chart-3: 0 93.5484% 81.7647%;
@@ -95,10 +95,10 @@
     --sidebar-accent-foreground: 257.6687 100% 68.0392%;
     --sidebar-border: 222.8571 6.4220% 21.3725%;
     --sidebar-ring: 257.6687 100% 68.0392%;
-    --font-sans: Plus Jakarta Sans, sans-serif;
+    --font-sans: "Public Sans", sans-serif;
     --font-serif: Lora, serif;
     --font-mono: IBM Plex Mono, monospace;
-    --radius: 0.325rem;
+    --radius: 1rem;
     --shadow-x: 0px;
     --shadow-y: 2px;
     --shadow-blur: 3px;

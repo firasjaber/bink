@@ -17,6 +17,12 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Public Sans', 'sans-serif'],
+      },
+      boxShadow: {
+        glow: '0 20px 45px -20px rgba(236, 91, 19, 0.35)',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
